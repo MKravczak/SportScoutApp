@@ -1,5 +1,6 @@
 # app/forms.py
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, FloatField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 from app.models import User, Sport
@@ -67,4 +68,5 @@ class PlayerForm(FlaskForm):
     position = StringField('Pozycja', validators=[DataRequired()])
     height = FloatField('Wzrost (cm)', validators=[DataRequired()])
     weight = FloatField('Waga (kg)', validators=[DataRequired()])
-    submit = SubmitField('Dodaj zawodnika')
+    photo = FileField('Zdjęcie zawodnika', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Tylko pliki obrazów!')])
+    submit = SubmitField('Zapisz')

@@ -49,7 +49,7 @@ body {
 }
 
 .logo h1 {
-    color: var(--accent-color);
+    //color: var(--accent-color);
     font-size: 2rem;
 }
 

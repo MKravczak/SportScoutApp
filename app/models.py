@@ -16,6 +16,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     role = db.Column(db.String(20), default='user')  # user, scout, club_manager, admin
+    profile_picture = db.Column(db.String(200), nullable=True)  # Path to profile picture file
+    status = db.Column(db.String(20), default='amateur')  # pro/amateur
     # created_at = db.Column(db.DateTime, default=lambda: datetime.utcnow(), nullable=False)
     players = db.relationship('Player', backref='scout', lazy='dynamic')
 
@@ -41,6 +43,7 @@ class Player(db.Model):
     weight = db.Column(db.Float)  # w kg
     birth_date = db.Column(db.Date)
     position = db.Column(db.String(64))
+    photo = db.Column(db.String(255), nullable=True)  # Path to player photo
     # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'))
     scout_id = db.Column(db.Integer, db.ForeignKey('user.id'))

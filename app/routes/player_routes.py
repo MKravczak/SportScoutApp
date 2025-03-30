@@ -5,6 +5,7 @@ from app.models import Player, Sport, PhysicalTest, Match, MatchStat
 from app.forms import PlayerForm
 from app.routes import players
 from datetime import datetime
+from app.utils.file_upload import save_player_photo, delete_file
 #from app.routes improt PhysicalTestForm, MatchStatForm
 
 @players.route('/list')
@@ -59,6 +60,14 @@ def add():
         )
         db.session.add(player)
         db.session.commit()
+        
+        # Handle photo upload
+        if form.photo.data:
+            photo_path = save_player_photo(form.photo.data, player.id)
+            if photo_path:
+                player.photo = photo_path
+                db.session.commit()
+        
         flash('Zawodnik został dodany pomyślnie.', 'success')
         return redirect(url_for('players.detail', player_id=player.id))
 
@@ -85,6 +94,17 @@ def edit(player_id):
         player.position = form.position.data
         player.height = form.height.data
         player.weight = form.weight.data
+        
+        # Handle photo upload
+        if form.photo.data:
+            # Delete old photo if exists
+            if player.photo:
+                delete_file(player.photo)
+            
+            # Save new photo
+            photo_path = save_player_photo(form.photo.data, player.id)
+            if photo_path:
+                player.photo = photo_path
 
         db.session.commit()
         flash('Dane zawodnika zostały zaktualizowane.', 'success')
