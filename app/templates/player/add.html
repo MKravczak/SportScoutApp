@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Dodaj zawodnika | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <h1>Dodaj nowego zawodnika</h1>
+
+    <form method="POST" action="{{ url_for('players.add') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.first_name.label }}
+            {{ form.first_name(class="form-control") }}
+            {% for error in form.first_name.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.last_name.label }}
+            {{ form.last_name(class="form-control") }}
+            {% for error in form.last_name.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.birth_date.label }}
+            {{ form.birth_date(class="form-control") }}
+            {% for error in form.birth_date.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.sport.label }}
+            {{ form.sport(class="form-control") }}
+            {% for error in form.sport.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.position.label }}
+            {{ form.position(class="form-control") }}
+            {% for error in form.position.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.height.label }}
+            {{ form.height(class="form-control") }}
+            {% for error in form.height.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.weight.label }}
+            {{ form.weight(class="form-control") }}
+            {% for error in form.weight.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('players.list') }}" class="btn btn-secondary">Anuluj</a>
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</section>
+{% endblock %}

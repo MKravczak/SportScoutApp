@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Strona główna | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="welcome">
+    <h1>Witaj w Scout Talent</h1>
+
+    {% if current_user.is_authenticated %}
+        <p>Witaj, {{ current_user.username }}!</p>
+        <p>Twoja rola: {{ current_user.role|capitalize }}</p>
+
+        <div class="dashboard-cards">
+            {% if current_user.role in ['scout', 'admin', 'club_manager'] %}
+                <div class="card">
+                    <h3>Zawodnicy</h3>
+                    <p>Zarządzaj zawodnikami i ich danymi</p>
+                    <a href="{{ url_for('players.list') }}" class="btn">Przejdź do zawodników</a>
+                </div>
+            {% endif %}
+
+            {% if current_user.role == 'admin' %}
+                <div class="card">
+                    <h3>Panel Admina</h3>
+                    <p>Zarządzaj systemem</p>
+                    <a href="{{ url_for('main.home') }}" class="btn">Przejdź do panelu</a>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>Zaloguj się, aby uzyskać dostęp do systemu skautingowego.</p>
+        <div class="cta-buttons">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Logowanie</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Rejestracja</a>
+        </div>
+
+    {% endif %}
+</section>
+{% endblock %}

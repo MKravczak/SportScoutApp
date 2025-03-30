@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Zarządzanie użytkownikami | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="admin-users">
+    <div class="header-section">
+        <h1>Zarządzanie użytkownikami</h1>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Powrót do panelu</a>
+    </div>
+
+    <div class="users-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nazwa użytkownika</th>
+                    <th>Email</th>
+                    <th>Rola</th>
+                    <th>Data utworzenia</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role|capitalize }}</td>
+{#                    <td>{{ user.created_at.strftime('%d-%m-%Y %H:%M') }}</td>#}
+                    <td class="actions">
+                        <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm">Edytuj</a>
+                        
+                        {% if current_user.id != user.id %}
+                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline-form" onsubmit="return confirm('Czy na pewno chcesz usunąć tego użytkownika?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

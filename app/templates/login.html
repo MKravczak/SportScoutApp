@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Logowanie | Scout Talent{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-form">
+        <div class="logo">
+            <h1>Scout Talent</h1>
+        </div>
+        <h2>Logowanie</h2>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flashes">
+            {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.username.label }}
+                {{ form.username(class="form-control") }}
+                {% for error in form.username.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.password.label }}
+                {{ form.password(class="form-control") }}
+                {% for error in form.password.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-check">
+                {{ form.remember_me(class="form-check-input") }}
+                {{ form.remember_me.label(class="form-check-label") }}
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+        <div class="register-link">
+            <p>Nie masz konta? <a href="{{ url_for('auth.register') }}">Zarejestruj się</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

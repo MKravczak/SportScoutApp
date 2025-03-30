@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ player.first_name }} {{ player.last_name }} | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="player-detail">
+    <div class="header-section">
+        <h1>{{ player.first_name }} {{ player.last_name }}</h1>
+        {% if current_user.role in ['scout', 'admin'] and (current_user.role == 'admin' or player.scout_id == current_user.id) %}
+            <div class="action-buttons">
+                <a href="{{ url_for('players.edit', player_id=player.id) }}" class="btn">Edytuj</a>
+                <a href="{{ url_for('players.add', player_id=player.id) }}" class="btn btn-primary">Dodaj test</a>
+                <a href="{{ url_for('players.add', player_id=player.id) }}" class="btn btn-secondary">Dodaj statystyki meczowe</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="player-info">
+        <div class="card">
+            <h2>Dane osobowe</h2>
+            <dl>
+                <dt>Imię i nazwisko:</dt>
+                <dd>{{ player.first_name }} {{ player.last_name }}</dd>
+
+                <dt>Dyscyplina:</dt>
+                <dd>{{ player.sport.name }}</dd>
+
+                <dt>Pozycja:</dt>
+                <dd>{{ player.position }}</dd>
+
+                <dt>Data urodzenia:</dt>
+                <dd>{{ player.birth_date.strftime('%d-%m-%Y') if player.birth_date else 'Brak danych' }}</dd>
+
+                <dt>Wzrost:</dt>
+                <dd>{{ player.height }} cm</dd>
+
+                <dt>Waga:</dt>
+                <dd>{{ player.weight }} kg</dd>
+
+                <dt>Dodany przez:</dt>
+                <dd>{{ player.scout.username }}</dd>
+
+                <dt>Data dodania:</dt>
+{#                <dd>{{ player.created_at.strftime('%d-%m-%Y') }}</dd>#}
+            </dl>
+        </div>
+    </div>
+
+    <div class="player-tests">
+        <h2>Testy sprawnościowe</h2>
+        {% if player.physical_tests.count() > 0 %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Sprint 100m</th>
+                        <th>Skok w dal</th>
+                        <th>Zwinność</th>
+                        <th>Wytrzymałość</th>
+                        <th>Siła</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in player.physical_tests %}
+                        <tr>
+                            <td>{{ test.test_date.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ test.sprint_100m }} s</td>
+                            <td>{{ test.long_jump }} cm</td>
+                            <td>{{ test.agility }} s</td>
+                            <td>{{ test.endurance }}</td>
+                            <td>{{ test.strength }} kg</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Brak testów sprawnościowych.</p>
+        {% endif %}
+    </div>
+
+    <div class="player-matches">
+        <h2>Statystyki meczowe</h2>
+        {% if player.match_stats.count() > 0 %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Przeciwnik</th>
+                        <th>Minuty</th>
+                        <th>Gole</th>
+                        <th>Asysty</th>
+                        <th>Dystans</th>
+                        <th>Kontakty z piłką</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in player.match_stats %}
+                        <tr>
+                            <td>{{ stat.match.date.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ stat.match.opponent }}</td>
+                            <td>{{ stat.minutes_played }}</td>
+                            <td>{{ stat.goals }}</td>
+                            <td>{{ stat.assists }}</td>
+                            <td>{{ stat.distance_covered }} km</td>
+                            <td>{{ stat.ball_contacts }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Brak statystyk meczowych.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

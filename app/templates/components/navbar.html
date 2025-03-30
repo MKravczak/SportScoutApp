@@ -1,0 +1,27 @@
+<header class="navbar">
+    <div class="logo">
+        <a href="{{ url_for('main.home') }}">Scout Talent</a>
+    </div>
+    <nav>
+        <div class="hamburger-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="{{ url_for('main.home') }}">Strona główna</a></li>
+            {% if current_user.is_authenticated %}
+                {% if current_user.role in ['scout', 'admin', 'club_manager'] %}
+                    <li><a href="{{ url_for('players.list') }}">Zawodnicy</a></li>
+                {% endif %}
+                {% if current_user.role == 'admin' %}
+                    <li><a href="{{ url_for('main.home') }}">Panel Admina</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('auth.logout') }}">Wyloguj</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Logowanie</a></li>
+                <li><a href="{{ url_for('auth.register') }}">Rejestracja</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Rejestracja | Scout Talent{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-form">
+        <div class="logo">
+            <h1>Scout Talent</h1>
+        </div>
+        <h2>Rejestracja</h2>
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.username.label }}
+                {{ form.username(class="form-control") }}
+                {% for error in form.username.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-control") }}
+                {% for error in form.email.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.password.label }}
+                {{ form.password(class="form-control") }}
+                {% for error in form.password.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.password2.label }}
+                {{ form.password2(class="form-control") }}
+                {% for error in form.password2.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+        <div class="login-link">
+            <p>Masz już konto? <a href="{{ url_for('auth.login') }}">Zaloguj się</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

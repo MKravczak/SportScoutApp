@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Edycja użytkownika | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="header-section">
+        <h1>Edycja użytkownika: {{ user.username }}</h1>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Powrót</a>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.role.label }}
+                {{ form.role(class="form-control") }}
+                {% for error in form.role.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="form-buttons">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %} 

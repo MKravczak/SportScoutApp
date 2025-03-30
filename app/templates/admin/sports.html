@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Dyscypliny sportowe | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="admin-sports">
+    <div class="header-section">
+        <h1>Zarządzanie dyscyplinami sportowymi</h1>
+        <div class="action-buttons">
+            <a href="{{ url_for('admin.add_sport') }}" class="btn btn-primary">Dodaj dyscyplinę</a>
+            <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Powrót do panelu</a>
+        </div>
+    </div>
+
+    <div class="sports-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nazwa</th>
+                    <th>Opis</th>
+                    <th>Liczba zawodników</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sport, player_count in sports %}
+                <tr>
+                    <td>{{ sport.id }}</td>
+                    <td>{{ sport.name }}</td>
+                    <td>{{ sport.description|truncate(100) }}</td>
+                    <td>{{ player_count }}</td>
+                    <td class="actions">
+                        <a href="{{ url_for('admin.edit_sport', sport_id=sport.id) }}" class="btn btn-sm">Edytuj</a>
+                        
+                        {% if player_count == 0 %}
+                        <form method="POST" action="{{ url_for('admin.delete_sport', sport_id=sport.id) }}" class="inline-form" onsubmit="return confirm('Czy na pewno chcesz usunąć tę dyscyplinę?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Usuń</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
