@@ -10,6 +10,19 @@ def load_user(id):
     return User.query.get(int(id))
 
 
+class Club(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    logo = db.Column(db.String(255), nullable=True)
+    city = db.Column(db.String(100))
+    scouts = db.relationship('User', backref='club', lazy='dynamic', foreign_keys='User.club_id')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __str__(self):
+        return self.name
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -20,6 +33,7 @@ class User(UserMixin, db.Model):
     status = db.Column(db.String(20), default='amateur')  # pro/amateur
     # created_at = db.Column(db.DateTime, default=lambda: datetime.utcnow(), nullable=False)
     players = db.relationship('Player', backref='scout', lazy='dynamic')
+    club_id = db.Column(db.Integer, db.ForeignKey('club.id'), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -44,6 +58,7 @@ class Player(db.Model):
     birth_date = db.Column(db.Date)
     position = db.Column(db.String(64))
     photo = db.Column(db.String(255), nullable=True)  # Path to player photo
+    is_amateur = db.Column(db.Boolean, default=False)  # True for amateur players, False for professional
     # created_at = db.Column(db.DateTime, default=datetime.utcnow)
     sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'))
     scout_id = db.Column(db.Integer, db.ForeignKey('user.id'))

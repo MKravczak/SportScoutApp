@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Scouci Klubu | Scout Talent{% endblock %}
+
+{% block content %}
+<div class="scouts-list-container">
+    <h1>Scouci Klubu {{ club.name }}</h1>
+    
+    {% if scouts %}
+        <div class="scouts-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Zdjęcie</th>
+                        <th>Nazwa użytkownika</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Zawodnicy</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for scout in scouts %}
+                        <tr>
+                            <td>
+                                {% if scout.profile_picture %}
+                                    <img src="{{ url_for('static', filename=scout.profile_picture) }}" alt="{{ scout.username }}" class="scout-thumbnail">
+                                {% else %}
+                                    <div class="scout-initial">{{ scout.username[0]|upper }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ scout.username }}</td>
+                            <td>{{ scout.email }}</td>
+                            <td>{{ scout.status|capitalize }}</td>
+                            <td>{{ scout.players.count() }}</td>
+                            <td>
+                                <a href="#" class="btn btn-sm">Profil</a>
+                                <a href="#" class="btn btn-sm">Zawodnicy</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="no-data">
+            <p>Brak scoutów przypisanych do Twojego klubu.</p>
+            <p>Skontaktuj się z administratorem, aby przypisać scoutów do klubu.</p>
+        </div>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="{{ url_for('clubs.dashboard') }}" class="btn">Powrót do panelu klubu</a>
+    </div>
+</div>
+{% endblock %} 

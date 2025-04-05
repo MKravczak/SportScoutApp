@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user, login_required
 from app import db
-from app.models import User, Player, Sport, PhysicalTest, Match, MatchStat
-from app.forms import SportForm, UserRoleForm
+from app.models import User, Player, Sport, PhysicalTest, Match, MatchStat, Club
+from app.forms import SportForm, UserRoleForm, AssignScoutForm
 from sqlalchemy import func
-
-admin = Blueprint('admin', __name__)
+from datetime import datetime, date
+from app.routes import admin
 
 # Decorator funkcji sprawdzający, czy użytkownik jest adminem
 def admin_required(func):
@@ -25,12 +25,14 @@ def dashboard():
     player_count = Player.query.count()
     test_count = PhysicalTest.query.count()
     match_count = Match.query.count()
+    club_count = Club.query.count()
     
     return render_template('admin/dashboard.html', 
                           user_count=user_count,
                           player_count=player_count,
                           test_count=test_count,
-                          match_count=match_count)
+                          match_count=match_count,
+                          club_count=club_count)
 
 @admin.route('/users')
 @login_required
@@ -54,6 +56,44 @@ def edit_user(user_id):
     
     return render_template('admin/edit_user.html', form=form, user=user)
 
+@admin.route('/users/assign-club/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def assign_club(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    # Tylko scouci mogą być przypisani do klubów
+    if user.role != 'scout':
+        flash('Tylko scouci mogą być przypisani do klubów.', 'danger')
+        return redirect(url_for('admin.users'))
+    
+    form = AssignScoutForm(obj=user)
+    form.club.choices = [(0, 'Brak klubu')] + [(c.id, c.name) for c in Club.query.order_by(Club.name).all()]
+    
+    if request.method == 'GET':
+        if user.club_id:
+            form.club.data = user.club_id
+        else:
+            form.club.data = 0
+    
+    if form.validate_on_submit():
+        if form.club.data == 0:
+            user.club_id = None
+            flash(f'Scout {user.username} został odłączony od klubu.', 'success')
+        else:
+            club = Club.query.get(form.club.data)
+            if club:
+                user.club_id = club.id
+                flash(f'Scout {user.username} został przypisany do klubu {club.name}.', 'success')
+            else:
+                flash('Wybrany klub nie istnieje.', 'danger')
+                return redirect(url_for('admin.assign_club', user_id=user.id))
+        
+        db.session.commit()
+        return redirect(url_for('admin.users'))
+    
+    return render_template('admin/assign_club.html', form=form, user=user)
+
 @admin.route('/users/delete/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -75,6 +115,26 @@ def delete_user(user_id):
     db.session.commit()
     flash(f'Użytkownik {user.username} został usunięty.', 'success')
     return redirect(url_for('admin.users'))
+
+@admin.route('/clubs')
+@login_required
+@admin_required
+def clubs():
+    clubs_list = Club.query.all()
+    clubs_with_stats = []
+    
+    for club in clubs_list:
+        scouts_count = User.query.filter_by(club_id=club.id, role='scout').count()
+        scout_ids = [s.id for s in User.query.filter_by(club_id=club.id, role='scout').all()]
+        players_count = Player.query.filter(Player.scout_id.in_(scout_ids)).count() if scout_ids else 0
+        
+        clubs_with_stats.append({
+            'club': club,
+            'scouts_count': scouts_count,
+            'players_count': players_count
+        })
+    
+    return render_template('admin/clubs.html', clubs=clubs_with_stats)
 
 @admin.route('/sports')
 @login_required
@@ -166,3 +226,63 @@ def statistics():
                           role_stats=role_stats,
                           test_count=test_count,
                           match_count=match_count)
+
+@admin.route('/amateur-players')
+@login_required
+@admin_required
+def amateur_players():
+    """Wyświetla listę wszystkich zawodników amatorskich z możliwością filtrowania."""
+    sport_id = request.args.get('sport', type=int)
+    search = request.args.get('search', '')
+    
+    # Baza zapytań - tylko zawodnicy amatorzy
+    query = Player.query.filter_by(is_amateur=True)
+    
+    # Filtrowanie po sporcie, jeśli określono
+    if sport_id:
+        query = query.filter_by(sport_id=sport_id)
+    
+    # Filtrowanie po wyszukiwanym tekście
+    if search:
+        query = query.filter(
+            (Player.first_name.ilike(f'%{search}%')) | 
+            (Player.last_name.ilike(f'%{search}%'))
+        )
+    
+    # Pobieranie danych do formularza filtrowania
+    sports = Sport.query.all()
+    
+    # Aktualna data do obliczania wieku
+    now = date.today()
+    
+    # Wykonanie zapytania
+    players = query.order_by(Player.last_name).all()
+    
+    return render_template(
+        'admin/amateur_players.html', 
+        players=players, 
+        sports=sports,
+        sport_id=sport_id,
+        search=search,
+        now=now
+    )
+
+@admin.route('/amateur-players/promote/<int:player_id>', methods=['POST'])
+@login_required
+@admin_required
+def promote_amateur(player_id):
+    """Awansuje zawodnika amatorskiego do statusu profesjonalnego."""
+    player = Player.query.get_or_404(player_id)
+    
+    # Sprawdzenie, czy zawodnik faktycznie jest amatorem
+    if not player.is_amateur:
+        flash('Ten zawodnik jest już profesjonalistą.', 'warning')
+        return redirect(url_for('admin.amateur_players'))
+    
+    # Awansowanie zawodnika - przypisanie go do administratora
+    player.is_amateur = False
+    player.scout_id = current_user.id
+    
+    db.session.commit()
+    flash(f'Zawodnik {player.first_name} {player.last_name} został awansowany do statusu profesjonalnego.', 'success')
+    return redirect(url_for('admin.amateur_players'))

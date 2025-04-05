@@ -1,18 +1,40 @@
 {% extends 'base.html' %}
 
-{% block title %}Lista zawodników | Scout Talent{% endblock %}
+{% block title %}
+{% if amateur %}
+Lista zawodników amatorskich | Scout Talent
+{% else %}
+Lista zawodników profesjonalnych | Scout Talent
+{% endif %}
+{% endblock %}
 
 {% block content %}
-<section class="player-list">
-    <div class="header-section">
-        <h1>Lista zawodników</h1>
-        {% if current_user.role in ['scout', 'admin'] %}
-            <a href="{{ url_for('players.add') }}" class="btn btn-primary">Dodaj zawodnika</a>
-        {% endif %}
+<section class="players-list-container">
+    <div class="page-header">
+        <h1>
+            {% if amateur %}
+            Lista zawodników amatorskich
+            {% else %}
+            Lista zawodników profesjonalnych
+            {% endif %}
+        </h1>
+        <div class="action-buttons">
+            {% if current_user.role in ['scout', 'admin'] %}
+                <a href="{{ url_for('players.add', amateur=0) }}" class="btn btn-primary">Dodaj zawodnika profesjonalnego</a>
+            {% endif %}
+            <a href="{{ url_for('players.add', amateur=1) }}" class="btn">Dodaj zawodnika amatorskiego</a>
+            
+            {% if amateur %}
+                <a href="{{ url_for('players.professional_list') }}" class="btn">Przejdź do zawodników profesjonalnych</a>
+            {% else %}
+                <a href="{{ url_for('players.amateur_list') }}" class="btn">Przejdź do zawodników amatorskich</a>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="filters card">
-        <form method="GET" action="{{ url_for('players.list') }}" class="filter-form">
+    <div class="filters">
+        <form method="GET" action="{{ url_for('players.list', amateur=amateur) }}" class="filter-form">
+            <input type="hidden" name="amateur" value="{{ '1' if amateur else '0' }}">
             <div class="form-group">
                 <label for="sport">Dyscyplina:</label>
                 <select name="sport" id="sport" class="form-control">
@@ -22,10 +44,6 @@
                     {% endfor %}
                 </select>
             </div>
-{#            <div class="form-group">#}
-{#                <label for="search">Wyszukaj zawodnika:</label>#}
-{#                <input type="text" name="search" id="search" class="form-control" placeholder="Imię lub nazwisko" value="{{ request.args.get('search', '') }}">#}
-{#            </div>#}
             <button type="submit" class="btn btn-primary">Filtruj</button>
         </form>
     </div>
@@ -53,73 +71,22 @@
             {% endfor %}
         </div>
     {% else %}
-        <p class="no-results">Nie znaleziono zawodników spełniających kryteria.</p>
+        <p class="no-data">
+            {% if amateur %}
+            Nie znaleziono zawodników amatorskich spełniających kryteria.
+            {% else %}
+            Nie znaleziono zawodników profesjonalnych spełniających kryteria.
+            {% endif %}
+        </p>
     {% endif %}
 </section>
 
 <style>
-    .header-section {
+    .action-buttons {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .header-section h1 {
-        margin: 0;
-        color: #f0c518;
-    }
-    
-    .card {
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    
-    .filters {
-        margin-bottom: 25px;
-    }
-    
-    .filter-form {
-        display: flex;
-        align-items: flex-end;
-        gap: 15px;
-    }
-    
-    .form-group {
-        flex: 1;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        color: #555;
-    }
-    
-    .form-control {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
-    
-    .btn-primary {
-        background-color: #4a69bd;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 14px;
-        cursor: pointer;
-        text-align: center;
-
-    }
-    
-    .btn-primary:hover {
-        background-color: #3c5aa8;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
     }
     
     .player-grid {
@@ -146,55 +113,43 @@
     
     .player-photo {
         text-align: center;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
     
-    .player-photo img {
-        margin-top:10px;
-        padding: 20px;
-        width: 180px;
-        height: 180px;
+    .player-img {
+        width: 140px;
+        height: 140px;
         object-fit: cover;
-        border-radius: 8px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border: 3px solid var(--primary-color);
     }
     
     .player-info {
-        flex: 1;
+        text-align: center;
     }
     
     .player-info h3 {
-        margin-top: 0;
+        color: var(--primary-color);
         margin-bottom: 10px;
-        color: #333;
-        font-size: 18px;
     }
     
     .player-info p {
-        margin: 8px 0;
-        color: #555;
-        font-size: 14px;
+        margin: 5px 0;
+        color: var(--dark-text);
     }
     
-    .player-info p strong {
-        color: #333;
+    .player-info .btn {
+        margin-top: 15px;
     }
     
-    .no-results {
-        text-align: center;
-        padding: 30px;
-        color: #666;
-        font-style: italic;
-    }
-    
-    @media (max-width: 576px) {
+    @media (max-width: 768px) {
         .filter-form {
             flex-direction: column;
             align-items: stretch;
         }
         
-        .player-grid {
-            grid-template-columns: 1fr;
+        .filter-form .btn {
+            margin-top: 10px;
         }
     }
 </style>

@@ -20,7 +20,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
 
     # Register blueprints
-    from app.routes import main, auth, players, admin
+    from app.routes import main, auth, players, admin, clubs
     from app.routes.api_routes import api
     
     app.register_blueprint(main)
@@ -28,6 +28,7 @@ def create_app(config_class=Config):
     app.register_blueprint(players, url_prefix='/players')
     app.register_blueprint(admin, url_prefix='/admin')
     app.register_blueprint(api, url_prefix='/api')
+    app.register_blueprint(clubs, url_prefix='/clubs')
 
     # Register error handlers
     @app.errorhandler(404)
@@ -43,27 +44,38 @@ def create_app(config_class=Config):
         db.drop_all()
         db.create_all()
 
-        from app.models import User, Sport, Player, PhysicalTest, Match, MatchStat  # Import modeli
+        from app.models import User, Sport, Player, PhysicalTest, Match, MatchStat, Club  # Import modeli
 
-        # Lista użytkowników do utworzenia (login, email, rola, status, zdjęcie profilowe)
+        # Utworzenie przykładowego klubu
+        club = Club(
+            name="FC Test",
+            description="Przykładowy klub piłkarski do testów",
+            city="Warszawa",
+            logo=None
+        )
+        db.session.add(club)
+        db.session.commit()
+
+        # Lista użytkowników do utworzenia (login, email, rola, status, zdjęcie profilowe, klub_id)
         users = [
-            ("admin", "admin@example.com", "admin", "pro", "/static/img/profiles/admin.jpg"),
-            ("user", "user@example.com", "user", "amateur", None),
-            ("scout", "scout@example.com", "scout", "pro", "/static/img/profiles/scout.jpg"),
-            ("club_manager", "club_manager@example.com", "club_manager", "pro", None)
+            ("admin", "admin@example.com", "admin", "pro", "/static/img/profiles/admin.jpg", None),
+            ("user", "user@example.com", "user", "amateur", None, None),
+            ("scout", "scout@example.com", "scout", "pro", "/static/img/profiles/scout.jpg", club.id),
+            ("scout2", "scout2@example.com", "scout", "pro", None, club.id),
+            ("club_manager", "club_manager@example.com", "club_manager", "pro", None, club.id)
         ]
 
         created_users = {}
-        for username, email, role, status, profile_pic in users:
+        for username, email, role, status, profile_pic, club_id in users:
             existing_user = User.query.filter_by(username=username).first()
             if existing_user is None:
-                user = User(username=username, email=email, role=role, status=status, profile_picture=profile_pic)
+                user = User(username=username, email=email, role=role, status=status, profile_picture=profile_pic, club_id=club_id)
                 user.set_password(username)  # Hasło takie samo jak login
                 db.session.add(user)
-                created_users[role] = user
+                created_users[username] = user
                 print(f'Utworzono konto: {username}')
             else:
-                created_users[role] = existing_user
+                created_users[username] = existing_user
 
         db.session.commit()  # Zapisz użytkowników, aby mieć dostęp do ich ID
 
@@ -111,7 +123,7 @@ def create_app(config_class=Config):
             # Dodanie zawodników dla każdego użytkownika (admin, scout i user)
             players_to_add = []
             
-            # Zawodnicy dodani przez admina (3 zawodników)
+            # Zawodnicy dodani przez admina (3 zawodników profesjonalnych)
             for i in range(3):
                 sport_name = random.choice(list(created_sports.keys()))
                 sport = created_sports[sport_name]
@@ -125,11 +137,12 @@ def create_app(config_class=Config):
                     birth_date=date(random.randint(1990, 2005), random.randint(1, 12), random.randint(1, 28)),
                     position=position,
                     sport_id=sport.id,
-                    scout_id=created_users['admin'].id
+                    scout_id=created_users['admin'].id,
+                    is_amateur=False
                 )
                 players_to_add.append(player)
             
-            # Zawodnicy dodani przez scouta (3 zawodników)
+            # Zawodnicy dodani przez scouta (3 zawodników profesjonalnych)
             for i in range(3):
                 sport_name = random.choice(list(created_sports.keys()))
                 sport = created_sports[sport_name]
@@ -143,11 +156,12 @@ def create_app(config_class=Config):
                     birth_date=date(random.randint(1990, 2005), random.randint(1, 12), random.randint(1, 28)),
                     position=position,
                     sport_id=sport.id,
-                    scout_id=created_users['scout'].id
+                    scout_id=created_users['scout'].id,
+                    is_amateur=False
                 )
                 players_to_add.append(player)
             
-            # Zawodnik dodany przez użytkownika (1 zawodnik)
+            # Zawodnik amatorski dodany przez użytkownika (1 zawodnik)
             sport_name = random.choice(list(created_sports.keys()))
             sport = created_sports[sport_name]
             position = random.choice(positions.get(sport_name, [None])) if sport_name in positions else None
@@ -160,7 +174,8 @@ def create_app(config_class=Config):
                 birth_date=date(random.randint(1990, 2005), random.randint(1, 12), random.randint(1, 28)),
                 position=position,
                 sport_id=sport.id,
-                scout_id=created_users['user'].id
+                scout_id=created_users['user'].id,
+                is_amateur=True
             )
             players_to_add.append(player)
             

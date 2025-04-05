@@ -12,16 +12,87 @@
             <li><a href="{{ url_for('main.home') }}">Strona główna</a></li>
             {% if current_user.is_authenticated %}
                 {% if current_user.role in ['scout', 'admin', 'club_manager'] %}
-                    <li><a href="{{ url_for('players.list') }}">Zawodnicy</a></li>
+                    <li><a href="{{ url_for('players.professional_list') }}">Zawodnicy</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('players.amateur_list') }}">Mój zawodnik</a></li>
                 {% endif %}
                 {% if current_user.role == 'admin' %}
-                    <li><a href="{{ url_for('main.home') }}">Panel Admina</a></li>
+                    <li><a href="{{ url_for('admin.dashboard') }}">Panel Admina</a></li>
+                {% endif %}
+                {% if current_user.role == 'club_manager' %}
+                    <li><a href="{{ url_for('clubs.dashboard') }}">Panel Klubu</a></li>
                 {% endif %}
                 <li><a href="{{ url_for('auth.logout') }}">Wyloguj</a></li>
             {% else %}
                 <li><a href="{{ url_for('auth.login') }}">Logowanie</a></li>
                 <li><a href="{{ url_for('auth.register') }}">Rejestracja</a></li>
+                <li><a href="{{ url_for('clubs.login') }}">Zarządzanie Klubem</a></li>
             {% endif %}
         </ul>
     </nav>
 </header>
+
+<style>
+    .dropdown {
+        position: relative;
+    }
+    
+    .dropdown-toggle {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    
+    .dropdown-toggle i {
+        margin-left: 5px;
+    }
+    
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: rgba(255, 255, 255, 0.95);
+        min-width: 180px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        border-radius: 4px;
+        padding: 8px 0;
+        margin-top: 5px;
+    }
+    
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+    
+    .dropdown-menu li {
+        display: block;
+        margin: 0;
+    }
+    
+    .dropdown-menu li a {
+        padding: 8px 15px;
+        display: block;
+        color: #333;
+        transition: background-color 0.2s;
+    }
+    
+    .dropdown-menu li a:hover {
+        background-color: rgba(74, 105, 189, 0.1);
+        color: #4a69bd;
+    }
+    
+    @media (max-width: 768px) {
+        .dropdown-menu {
+            position: static;
+            box-shadow: none;
+            background-color: rgba(255, 255, 255, 0.05);
+            margin-top: 0;
+            padding-left: 15px;
+        }
+        
+        .dropdown-toggle i {
+            display: none;
+        }
+    }
+</style>

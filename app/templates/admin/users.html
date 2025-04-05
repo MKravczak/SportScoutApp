@@ -17,7 +17,8 @@
                     <th>Nazwa użytkownika</th>
                     <th>Email</th>
                     <th>Rola</th>
-                    <th>Data utworzenia</th>
+                    <th>Status</th>
+                    <th>Klub</th>
                     <th>Akcje</th>
                 </tr>
             </thead>
@@ -28,9 +29,20 @@
                     <td>{{ user.username }}</td>
                     <td>{{ user.email }}</td>
                     <td>{{ user.role|capitalize }}</td>
-{#                    <td>{{ user.created_at.strftime('%d-%m-%Y %H:%M') }}</td>#}
+                    <td>{{ user.status|capitalize if user.status else "N/A" }}</td>
+                    <td>
+                        {% if user.club %}
+                            {{ user.club.name }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td class="actions">
                         <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm">Edytuj</a>
+                        
+                        {% if user.role == 'scout' %}
+                        <a href="{{ url_for('admin.assign_club', user_id=user.id) }}" class="btn btn-sm">Przypisz do klubu</a>
+                        {% endif %}
                         
                         {% if current_user.id != user.id %}
                         <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline-form" onsubmit="return confirm('Czy na pewno chcesz usunąć tego użytkownika?');">
@@ -44,4 +56,37 @@
         </table>
     </div>
 </section>
+
+<style>
+    .admin-users {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .users-table-container {
+        overflow-x: auto;
+    }
+    
+    .inline-form {
+        display: inline;
+    }
+    
+    .actions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    
+    .actions .btn {
+        white-space: nowrap;
+    }
+</style>
 {% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel Klubu | Scout Talent{% endblock %}
+
+{% block content %}
+<div class="club-dashboard">
+    <h1>Panel Zarządzania Klubem: {{ club.name }}</h1>
+    
+    <div class="club-info-box">
+        <div class="club-logo">
+            {% if club.logo %}
+                <img src="{{ url_for('static', filename='uploads/club_logos/' + club.logo) }}" alt="{{ club.name }} logo">
+            {% else %}
+                <div class="placeholder-logo">{{ club.name[0] }}</div>
+            {% endif %}
+        </div>
+        <div class="club-details">
+            <p><strong>Miasto:</strong> {{ club.city }}</p>
+            <p><strong>Liczba scoutów:</strong> {{ scouts|length }}</p>
+            <p><strong>Liczba zawodników:</strong> {{ players|length }}</p>
+            <a href="{{ url_for('clubs.profile') }}" class="btn btn-primary">Edytuj profil klubu</a>
+        </div>
+    </div>
+
+    <div class="dashboard-cards">
+        <div class="card">
+            <h3>Zawodnicy klubu</h3>
+            <p>Zarządzaj zawodnikami dodanymi przez scoutów Twojego klubu</p>
+            <a href="{{ url_for('clubs.players_list') }}" class="btn">Przeglądaj zawodników</a>
+        </div>
+        
+        <div class="card">
+            <h3>Scouci klubu</h3>
+            <p>Przeglądaj scoutów przypisanych do Twojego klubu</p>
+            <a href="{{ url_for('clubs.scouts_list') }}" class="btn">Przeglądaj scoutów</a>
+        </div>
+        
+        <div class="card">
+            <h3>Zawodnicy amatorzy</h3>
+            <p>Przeglądaj zawodników amatorskich w bazie danych</p>
+            <a href="{{ url_for('clubs.amateur_players') }}" class="btn">Przeglądaj amatorów</a>
+        </div>
+    </div>
+
+    <div class="dashboard-stats">
+        <h2>Ostatnio dodani zawodnicy</h2>
+        {% if players %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Imię i nazwisko</th>
+                        <th>Pozycja</th>
+                        <th>Scout</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in players[:5] %}
+                        <tr>
+                            <td>{{ player.first_name }} {{ player.last_name }}</td>
+                            <td>{{ player.position }}</td>
+                            <td>{{ player.scout.username }}</td>
+                            <td>
+                                <a href="{{ url_for('players.detail', player_id=player.id) }}" class="btn btn-sm">Szczegóły</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if players|length > 5 %}
+                <a href="{{ url_for('clubs.players_list') }}" class="btn-text">Zobacz wszystkich zawodników</a>
+            {% endif %}
+        {% else %}
+            <p class="no-data">Brak zawodników dodanych przez scoutów Twojego klubu.</p>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-stats">
+        <h2>Dostępni zawodnicy amatorzy</h2>
+        {% if amateur_players %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Imię i nazwisko</th>
+                        <th>Pozycja</th>
+                        <th>Dyscyplina</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in amateur_players[:5] %}
+                        <tr>
+                            <td>{{ player.first_name }} {{ player.last_name }}</td>
+                            <td>{{ player.position }}</td>
+                            <td>{{ player.sport.name }}</td>
+                            <td>
+                                <a href="{{ url_for('players.detail', player_id=player.id) }}" class="btn btn-sm">Szczegóły</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if amateur_players|length > 5 %}
+                <a href="{{ url_for('clubs.amateur_players') }}" class="btn-text">Zobacz wszystkich amatorów</a>
+            {% endif %}
+        {% else %}
+            <p class="no-data">Brak zawodników amatorskich w bazie danych.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

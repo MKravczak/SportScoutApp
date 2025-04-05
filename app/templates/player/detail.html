@@ -23,6 +23,9 @@
                     <dt>Imię i nazwisko:</dt>
                     <dd>{{ player.first_name }} {{ player.last_name }}</dd>
 
+                    <dt>Status:</dt>
+                    <dd>{% if player.is_amateur %}Zawodnik amatorski{% else %}Zawodnik profesjonalny{% endif %}</dd>
+
                     <dt>Dyscyplina:</dt>
                     <dd>{{ player.sport.name }}</dd>
 

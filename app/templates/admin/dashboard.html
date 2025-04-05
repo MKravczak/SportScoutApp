@@ -20,9 +20,15 @@
         </div>
 
         <div class="card">
-            <h3>Wszyscy zawodnicy</h3>
-            <p>Przeglądaj wszystkich zawodników w systemie</p>
-            <a href="{{ url_for('players.list') }}" class="btn">Przejdź do zawodników</a>
+            <h3>Zawodnicy profesjonalni</h3>
+            <p>Przeglądaj zawodników profesjonalnych</p>
+            <a href="{{ url_for('players.professional_list') }}" class="btn">Przejdź do profesjonalistów</a>
+        </div>
+        
+        <div class="card highlight-card">
+            <h3>Baza amatorów</h3>
+            <p>Przeglądaj i zarządzaj zawodnikami amatorskimi</p>
+            <a href="{{ url_for('admin.amateur_players') }}" class="btn btn-primary">Przejdź do amatorów</a>
         </div>
     </div>
 

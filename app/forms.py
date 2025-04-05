@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, FloatField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
-from app.models import User, Sport
+from app.models import User, Sport, Club
 
 
 class LoginForm(FlaskForm):
@@ -36,6 +36,47 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError('Ten adres email jest już zajęty.')
+
+
+class ClubLoginForm(FlaskForm):
+    name = StringField('Nazwa klubu', validators=[DataRequired()])
+    password = PasswordField('Hasło', validators=[DataRequired()])
+    remember_me = BooleanField('Zapamiętaj mnie')
+    submit = SubmitField('Zaloguj się')
+
+
+class ClubRegistrationForm(FlaskForm):
+    name = StringField('Nazwa klubu', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Hasło', validators=[DataRequired()])
+    password2 = PasswordField('Powtórz hasło', validators=[DataRequired(), EqualTo('password')])
+    city = StringField('Miasto', validators=[DataRequired()])
+    description = TextAreaField('Opis')
+    logo = FileField('Logo klubu', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Tylko pliki obrazów!')])
+    submit = SubmitField('Zarejestruj klub')
+
+    def validate_name(self, name):
+        club = Club.query.filter_by(name=name.data).first()
+        if club:
+            raise ValidationError('Klub o takiej nazwie już istnieje.')
+
+
+class ClubForm(FlaskForm):
+    name = StringField('Nazwa klubu', validators=[DataRequired()])
+    city = StringField('Miasto', validators=[DataRequired()])
+    description = TextAreaField('Opis')
+    logo = FileField('Logo klubu', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Tylko pliki obrazów!')])
+    submit = SubmitField('Zapisz')
+    
+    def validate_name(self, name):
+        club = Club.query.filter_by(name=name.data).first()
+        if club and club.id != getattr(self, '_obj_id', None):
+            raise ValidationError('Klub o takiej nazwie już istnieje.')
+
+
+class AssignScoutForm(FlaskForm):
+    club = SelectField('Klub', coerce=int)
+    submit = SubmitField('Przypisz')
 
 
 class SportForm(FlaskForm):
