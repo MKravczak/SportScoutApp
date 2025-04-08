@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if is_amateur %}
+Dodaj zawodnika amatorskiego | Scout Talent
+{% else %}
+Dodaj zawodnika profesjonalnego | Scout Talent
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="form-container">
+    <div class="page-header">
+        <h1>
+            {% if is_amateur %}
+            Dodaj zawodnika amatorskiego
+            {% else %}
+            Dodaj zawodnika profesjonalnego
+            {% endif %}
+        </h1>
+    </div>
+
+    <form method="POST" action="{{ url_for('players.add', amateur=1 if is_amateur else 0) }}" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        
+        {% if is_amateur %}
+        <div class="amateur-notice">
+            <div class="notice-content">
+                <i class="fas fa-info-circle"></i>
+                <p>Tworzysz profil zawodnika amatorskiego. Informacje te będą widoczne w bazie amatorów i mogą być przeglądane przez skautów.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            {{ form.first_name.label }}
+            {{ form.first_name(class="form-control") }}
+            {% for error in form.first_name.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.last_name.label }}
+            {{ form.last_name(class="form-control") }}
+            {% for error in form.last_name.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.birth_date.label }}
+            {{ form.birth_date(class="form-control") }}
+            {% for error in form.birth_date.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.sport.label }}
+            {{ form.sport(class="form-control") }}
+            {% for error in form.sport.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.position.label }}
+            {{ form.position(class="form-control") }}
+            {% for error in form.position.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.height.label }}
+            {{ form.height(class="form-control") }}
+            {% for error in form.height.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.weight.label }}
+            {{ form.weight(class="form-control") }}
+            {% for error in form.weight.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.photo.label }}
+            {{ form.photo(class="form-control") }}
+            {% for error in form.photo.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+            <small class="form-text text-muted">Dozwolone formaty: jpg, jpeg, png</small>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('players.list', amateur=1 if is_amateur else 0) }}" class="btn">Anuluj</a>
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</section>
+
+<style>
+    .amateur-notice {
+        background-color: rgba(23, 162, 184, 0.15);
+        border-left: 4px solid #17a2b8;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    
+    .notice-content {
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .notice-content i {
+        font-size: 20px;
+        color: #17a2b8;
+        margin-right: 10px;
+        margin-top: 2px;
+    }
+    
+    .notice-content p {
+        margin: 0;
+        color: var(--dark-text);
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 5px;
+        color: #666;
+        font-size: 13px;
+    }
+</style>
+{% endblock %}

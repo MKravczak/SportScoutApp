@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if amateur %}
+Lista zawodników amatorskich | Scout Talent
+{% else %}
+Lista zawodników profesjonalnych | Scout Talent
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="players-list-container">
+    <div class="page-header">
+        <h1>
+            {% if amateur %}
+            Lista zawodników amatorskich
+            {% else %}
+            Lista zawodników profesjonalnych
+            {% endif %}
+        </h1>
+        <div class="action-buttons">
+            {% if current_user.role in ['scout', 'admin'] %}
+                <a href="{{ url_for('players.add', amateur=0) }}" class="btn btn-primary">Dodaj zawodnika profesjonalnego</a>
+            {% endif %}
+            <a href="{{ url_for('players.add', amateur=1) }}" class="btn">Dodaj zawodnika amatorskiego</a>
+            
+            {% if amateur %}
+                <a href="{{ url_for('players.professional_list') }}" class="btn">Przejdź do zawodników profesjonalnych</a>
+            {% else %}
+                <a href="{{ url_for('players.amateur_list') }}" class="btn">Przejdź do zawodników amatorskich</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="filters">
+        <form method="GET" action="{{ url_for('players.list', amateur=amateur) }}" class="filter-form">
+            <input type="hidden" name="amateur" value="{{ '1' if amateur else '0' }}">
+            <div class="form-group">
+                <label for="sport">Dyscyplina:</label>
+                <select name="sport" id="sport" class="form-control">
+                    <option value="">Wszystkie</option>
+                    {% for sport in sports %}
+                        <option value="{{ sport.id }}" {% if request.args.get('sport')|int == sport.id %}selected{% endif %}>{{ sport.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtruj</button>
+        </form>
+    </div>
+
+    {% if players %}
+       <div class="player-grid">
+            {% for player in players %}
+                <div class="player-card">
+                    <div class="player-photo">
+                        <a href="{{ url_for('players.detail', player_id=player.id) }}">
+                            {% if player.photo %}
+                                <img src="{{ player.photo.replace('.', '_thumb.') }}" alt="Zdjęcie {{ player.first_name }}" class="player-img">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='img/default_player.png') }}" alt="Zdjęcie {{ player.first_name }}" class="player-img">
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="player-info">
+                        <h3>{{ player.first_name }} {{ player.last_name }}</h3>
+                        <p><strong>Dyscyplina:</strong> {{ player.sport.name }}</p>
+                        <p><strong>Pozycja:</strong> {{ player.position }}</p>
+                        <a href="{{ url_for('players.detail', player_id=player.id) }}" class="btn btn-primary">Szczegóły</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-data">
+            {% if amateur %}
+            Nie znaleziono zawodników amatorskich spełniających kryteria.
+            {% else %}
+            Nie znaleziono zawodników profesjonalnych spełniających kryteria.
+            {% endif %}
+        </p>
+    {% endif %}
+</section>
+
+<style>
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+    
+    .player-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .player-card {
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .player-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .player-photo {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    
+    .player-img {
+        width: 140px;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid var(--primary-color);
+    }
+    
+    .player-info {
+        text-align: center;
+    }
+    
+    .player-info h3 {
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    
+    .player-info p {
+        margin: 5px 0;
+        color: var(--dark-text);
+    }
+    
+    .player-info .btn {
+        margin-top: 15px;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-form .btn {
+            margin-top: 10px;
+        }
+    }
+</style>
+{% endblock %}

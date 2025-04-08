@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Zawodnicy Amatorzy | Scout Talent{% endblock %}
+
+{% block content %}
+<div class="players-list-container">
+    <h1>Zawodnicy Amatorzy</h1>
+    
+    <div class="filters">
+        <form method="GET" class="filter-form">
+            <div class="form-group">
+                <label for="sport">Dyscyplina:</label>
+                <select name="sport" id="sport" class="form-control" onchange="this.form.submit()">
+                    <option value="">Wszystkie dyscypliny</option>
+                    {% for sport in sports %}
+                        <option value="{{ sport.id }}" {% if sport_id == sport.id %}selected{% endif %}>{{ sport.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="search">Wyszukaj:</label>
+                <div class="search-input">
+                    <input type="text" name="search" id="search" class="form-control" value="{{ search }}" placeholder="Imię lub nazwisko...">
+                    <button type="submit" class="btn btn-primary">Szukaj</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    {% if players %}
+        <div class="players-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Imię i nazwisko</th>
+                        <th>Wiek</th>
+                        <th>Pozycja</th>
+                        <th>Dyscyplina</th>
+                        <th>Dodany przez</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in players %}
+                        <tr>
+                            <td>
+                                {% if player.photo %}
+                                    <img src="{{ url_for('static', filename='uploads/player_photos/' + player.photo) }}" alt="{{ player.first_name }} {{ player.last_name }}" class="player-thumbnail">
+                                {% endif %}
+                                {{ player.first_name }} {{ player.last_name }}
+                            </td>
+                            <td>{{ ((now - player.birth_date).days / 365)|int }} lat</td>
+                            <td>{{ player.position }}</td>
+                            <td>{{ player.sport.name }}</td>
+                            <td>{{ player.scout.username }}</td>
+                            <td>
+                                <a href="{{ url_for('players.detail', player_id=player.id) }}" class="btn btn-sm">Szczegóły</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="no-data">
+            <p>Brak zawodników amatorów spełniających wybrane kryteria.</p>
+        </div>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="{{ url_for('clubs.dashboard') }}" class="btn">Powrót do panelu klubu</a>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Edytuj zawodnika | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="header-section">
+        <h1>Edytuj zawodnika: {{ player.first_name }} {{ player.last_name }}</h1>
+    </div>
+
+    <div class="card">
+        <form method="POST" action="{{ url_for('players.edit', player_id=player.id) }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.first_name.label }}
+                {{ form.first_name(class="form-control") }}
+                {% for error in form.first_name.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.last_name.label }}
+                {{ form.last_name(class="form-control") }}
+                {% for error in form.last_name.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.birth_date.label }}
+                {{ form.birth_date(class="form-control") }}
+                {% for error in form.birth_date.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.sport.label }}
+                {{ form.sport(class="form-control") }}
+                {% for error in form.sport.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.position.label }}
+                {{ form.position(class="form-control") }}
+                {% for error in form.position.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.height.label }}
+                {{ form.height(class="form-control") }}
+                {% for error in form.height.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.weight.label }}
+                {{ form.weight(class="form-control") }}
+                {% for error in form.weight.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.photo.label }}
+                {{ form.photo(class="form-control") }}
+                {% for error in form.photo.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+                <small class="form-text text-muted">Dozwolone formaty: jpg, jpeg, png</small>
+                
+                {% if player.photo %}
+                <div class="current-photo mt-2">
+                    <p>Aktualne zdjęcie:</p>
+                    <img src="{{ player.photo }}" alt="{{ player.first_name }} {{ player.last_name }}" class="img-thumbnail" style="max-width: 200px;">
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('players.detail', player_id=player.id) }}" class="btn btn-secondary">Anuluj</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</section>
+
+<style>
+    .header-section {
+        margin-bottom: 20px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        color: #f0c518;
+       text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;
+    }
+    
+    .card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #444;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .error {
+        color: #e74c3c;
+        font-size: 13px;
+        display: block;
+        margin-top: 5px;
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 5px;
+        color: #666;
+        font-size: 13px;
+    }
+    
+    .current-photo {
+        margin-top: 15px;
+    }
+    
+    .current-photo p {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    
+    .img-thumbnail {
+        padding: 5px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+    }
+    
+    .btn {
+        padding: 10px 18px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        border: none;
+    }
+    
+    .btn-primary {
+        background-color: #4a69bd;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #3c5aa8;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .mt-2 {
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}

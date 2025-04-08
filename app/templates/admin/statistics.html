@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Statystyki systemu | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="admin-statistics">
+    <div class="header-section">
+        <h1>Statystyki systemu</h1>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Powrót do panelu</a>
+    </div>
+
+    <div class="stats-container">
+        <div class="stats-card">
+            <h2>Statystyki dyscyplin</h2>
+            <div class="stats-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Dyscyplina</th>
+                            <th>Liczba zawodników</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sport_name, count in sports_stats %}
+                        <tr>
+                            <td>{{ sport_name }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Statystyki użytkowników</h2>
+            <div class="stats-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Rola</th>
+                            <th>Liczba użytkowników</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role, count in role_stats %}
+                        <tr>
+                            <td>{{ role|capitalize }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h2>Statystyki aktywności</h2>
+            <div class="stats-summary">
+                <div class="summary-item">
+                    <h3>Testy sprawnościowe</h3>
+                    <p class="summary-value">{{ test_count }}</p>
+                </div>
+                <div class="summary-item">
+                    <h3>Mecze</h3>
+                    <p class="summary-value">{{ match_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

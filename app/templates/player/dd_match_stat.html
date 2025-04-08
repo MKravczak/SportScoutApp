@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Dodaj statystyki meczowe | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <h1>Dodaj statystyki meczowe</h1>
+    <h2>Zawodnik: {{ player.first_name }} {{ player.last_name }}</h2>
+
+    <form method="POST" action="{{ url_for('players.add', player_id=player.id) }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            {{ form.match.label }}
+            {{ form.match(class="form-control") }}
+            {% for error in form.match.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.minutes_played.label }}
+            {{ form.minutes_played(class="form-control") }}
+            {% for error in form.minutes_played.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.goals.label }}
+            {{ form.goals(class="form-control") }}
+            {% for error in form.goals.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.assists.label }}
+            {{ form.assists(class="form-control") }}
+            {% for error in form.assists.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.ball_contacts.label }}
+            {{ form.ball_contacts(class="form-control") }}
+            {% for error in form.ball_contacts.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.distance_covered.label }}
+            {{ form.distance_covered(class="form-control") }}
+            {% for error in form.distance_covered.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="sport-specific-fields">
+            {% if player.sport.name == 'Piłka nożna' %}
+                <div class="form-group">
+                    {{ form.shots.label }}
+                    {{ form.shots(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.passes.label }}
+                    {{ form.passes(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.successful_passes.label }}
+                    {{ form.successful_passes(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.yellow_cards.label }}
+                    {{ form.yellow_cards(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.red_cards.label }}
+                    {{ form.red_cards(class="form-control") }}
+                </div>
+            {% endif %}
+
+            {% if player.sport.name == 'Koszykówka' %}
+                <div class="form-group">
+                    {{ form.shots.label }}
+                    {{ form.shots(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.rebounds.label }}
+                    {{ form.rebounds(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.blocks.label }}
+                    {{ form.blocks(class="form-control") }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.steals.label }}
+                    {{ form.steals(class="form-control") }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('players.detail', player_id=player.id) }}" class="btn btn-secondary">Anuluj</a>
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</section>
+{% endblock %}

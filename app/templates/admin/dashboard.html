@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel Admina | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="admin-dashboard">
+    <h1>Panel Administracyjny</h1>
+
+    <div class="dashboard-cards">
+        <div class="card">
+            <h3>Użytkownicy</h3>
+            <p>Zarządzaj użytkownikami systemu</p>
+            <a href="{{ url_for('admin.users') }}" class="btn">Przejdź do użytkowników</a>
+        </div>
+
+        <div class="card">
+            <h3>Dyscypliny</h3>
+            <p>Zarządzaj dyscyplinami sportowymi</p>
+            <a href="{{ url_for('admin.sports') }}" class="btn">Przejdź do dyscyplin</a>
+        </div>
+
+        <div class="card">
+            <h3>Zawodnicy profesjonalni</h3>
+            <p>Przeglądaj zawodników profesjonalnych</p>
+            <a href="{{ url_for('players.professional_list') }}" class="btn">Przejdź do profesjonalistów</a>
+        </div>
+        
+        <div class="card highlight-card">
+            <h3>Baza amatorów</h3>
+            <p>Przeglądaj i zarządzaj zawodnikami amatorskimi</p>
+            <a href="{{ url_for('admin.amateur_players') }}" class="btn btn-primary">Przejdź do amatorów</a>
+        </div>
+    </div>
+
+    <div class="stats-cards">
+        <div class="stat-card">
+            <h3>Użytkownicy</h3>
+            <p class="stat-number">{{ user_count }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Zawodnicy</h3>
+            <p class="stat-number">{{ player_count }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Testy</h3>
+            <p class="stat-number">{{ test_count }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Mecze</h3>
+            <p class="stat-number">{{ match_count }}</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

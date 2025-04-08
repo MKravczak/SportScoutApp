@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Przypisz Klub | Panel Admina | Scout Talent{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <h1>Przypisz Klub dla Scouta</h1>
+    
+    <div class="card" style="margin-bottom: 20px;">
+        <h3>{{ user.username }}</h3>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Rola:</strong> {{ user.role|capitalize }}</p>
+        <p><strong>Obecny klub:</strong> {% if user.club %}{{ user.club.name }}{% else %}Brak przypisanego klubu{% endif %}</p>
+    </div>
+
+    <div class="card">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.club.label }}
+                {{ form.club(class="form-control") }}
+                {% for error in form.club.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.users') }}" class="btn">Anuluj</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

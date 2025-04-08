@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ player.first_name }} {{ player.last_name }} | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="player-detail">
+    <div class="header-section">
+        <h1>{{ player.first_name }} {{ player.last_name }}</h1>
+        {% if current_user.role in ['scout', 'admin'] and (current_user.role == 'admin' or player.scout_id == current_user.id) %}
+            <div class="action-buttons">
+                <a href="{{ url_for('players.edit', player_id=player.id) }}" class="btn btn-primary">Edytuj</a>
+                <a href="{{ url_for('players.add', player_id=player.id) }}" class="btn btn-primary">Dodaj test</a>
+                <a href="{{ url_for('players.add', player_id=player.id) }}" class="btn btn-primary">Dodaj statystyki meczowe</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="player-info card">
+        <div class="player-header">
+            <div class="player-details">
+                <h2>Dane osobowe</h2>
+                <dl>
+                    <dt>Imię i nazwisko:</dt>
+                    <dd>{{ player.first_name }} {{ player.last_name }}</dd>
+
+                    <dt>Status:</dt>
+                    <dd>{% if player.is_amateur %}Zawodnik amatorski{% else %}Zawodnik profesjonalny{% endif %}</dd>
+
+                    <dt>Dyscyplina:</dt>
+                    <dd>{{ player.sport.name }}</dd>
+
+                    <dt>Pozycja:</dt>
+                    <dd>{{ player.position }}</dd>
+
+                    <dt>Data urodzenia:</dt>
+                    <dd>{{ player.birth_date.strftime('%d-%m-%Y') if player.birth_date else 'Brak danych' }}</dd>
+
+                    <dt>Wzrost:</dt>
+                    <dd>{{ player.height }} cm</dd>
+
+                    <dt>Waga:</dt>
+                    <dd>{{ player.weight }} kg</dd>
+
+                    <dt>Dodany przez:</dt>
+                    <dd>{{ player.scout.username }}</dd>
+
+                    <dt>Data dodania:</dt>
+{#                <dd>{{ player.created_at.strftime('%d-%m-%Y') }}</dd>#}
+                </dl>
+            </div>
+            {% if player.photo %}
+            <div class="player-photo">
+                <img src="{{ player.photo }}" alt="{{ player.first_name }} {{ player.last_name }}" class="img-fluid rounded">
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="player-tests card">
+        <h2>Testy sprawnościowe</h2>
+        {% if player.physical_tests.count() > 0 %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Sprint 100m</th>
+                        <th>Skok w dal</th>
+                        <th>Zwinność</th>
+                        <th>Wytrzymałość</th>
+                        <th>Siła</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in player.physical_tests %}
+                        <tr>
+                            <td>{{ test.test_date.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ test.sprint_100m }} s</td>
+                            <td>{{ test.long_jump }} cm</td>
+                            <td>{{ test.agility }} s</td>
+                            <td>{{ test.endurance }}</td>
+                            <td>{{ test.strength }} kg</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Brak testów sprawnościowych.</p>
+        {% endif %}
+    </div>
+
+    <div class="player-matches card">
+        <h2>Statystyki meczowe</h2>
+        {% if player.match_stats.count() > 0 %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Przeciwnik</th>
+                        <th>Minuty</th>
+                        <th>Gole</th>
+                        <th>Asysty</th>
+                        <th>Dystans</th>
+                        <th>Kontakty z piłką</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in player.match_stats %}
+                        <tr>
+                            <td>{{ stat.match.date.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ stat.match.opponent }}</td>
+                            <td>{{ stat.minutes_played }}</td>
+                            <td>{{ stat.goals }}</td>
+                            <td>{{ stat.assists }}</td>
+                            <td>{{ stat.distance_covered }} km</td>
+                            <td>{{ stat.ball_contacts }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Brak statystyk meczowych.</p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    .player-detail section {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 30px;
+        color: white;
+         text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-primary {
+        background-color: #4a69bd;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .btn-primary:hover {
+        background-color: #3c5aa8;
+    }
+    
+    .player-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .player-details {
+        flex: 1;
+    }
+    
+    .player-details h2 {
+        color: #333;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 20px;
+    }
+    
+    .player-details dl {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        row-gap: 8px;
+    }
+    
+    .player-details dt {
+        font-weight: bold;
+        color: #555;
+    }
+    
+    .player-details dd {
+        margin-left: 0;
+        color: #333;
+    }
+    
+    .player-photo {
+        margin-left: 30px;
+        margin-bottom: 20px;
+        width:200px;
+        height: 200px;
+    }
+    
+    .player-photo img {
+        margin-right:100px;
+        padding-left: 100px;
+        max-width: 300px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .player-tests h2, .player-matches h2 {
+        color: #333;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 20px;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    
+    .data-table th {
+        background-color: #4a69bd;
+        color: white;
+        padding: 10px;
+        text-align: left;
+        font-weight: normal;
+    }
+    
+    .data-table td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        color: #555;
+    }
+    
+    .data-table tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    @media (max-width: 768px) {
+        .player-header {
+            flex-direction: column-reverse;
+        }
+        
+        .player-photo {
+            margin-left: 0;
+            margin-bottom: 20px;
+            align-self: center;
+        }
+        
+        .player-details dl {
+            grid-template-columns: 1fr;
+        }
+        
+        .player-details dt {
+            margin-top: 10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %}

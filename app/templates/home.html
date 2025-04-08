@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+
+{% block title %}Strona główna | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="welcome-section">
+    <div class="hero-banner">
+        <h1>Scout Talent</h1>
+        <p class="tagline">Profesjonalny system skautingowy dla klubów sportowych</p>
+    </div>
+
+    <div class="home-container">
+        <div class="content-left">
+            {% if current_user.is_authenticated %}
+                <div class="welcome-user">
+                    <h2>Witaj, {{ current_user.username }}!</h2>
+                    <p>Rola: <span class="user-role">{{ current_user.role|capitalize }}</span></p>
+                    
+                    <div class="dashboard-cards">
+                        {% if current_user.role in ['scout', 'admin', 'club_manager'] %}
+                            <div class="card">
+                                <h3>Zawodnicy</h3>
+                                <p>Zarządzaj zawodnikami i ich danymi</p>
+                                <a href="{{ url_for('players.professional_list') }}" class="btn">Przejdź do zawodników</a>
+                            </div>
+                        {% endif %}
+
+                        {% if current_user.role == 'admin' %}
+                            <div class="card">
+                                <h3>Panel Admina</h3>
+                                <p>Zarządzaj systemem</p>
+                                <a href="{{ url_for('admin.dashboard') }}" class="btn">Przejdź do panelu</a>
+                            </div>
+                        {% endif %}
+
+                        {% if current_user.role == 'club_manager' %}
+                            <div class="card">
+                                <h3>Panel Klubu</h3>
+                                <p>Zarządzaj klubem i przeglądaj zawodników</p>
+                                <a href="{{ url_for('clubs.dashboard') }}" class="btn">Przejdź do panelu klubu</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="auth-options">
+                    <h2>Dołącz do platformy</h2>
+                    <p>Zaloguj się, aby uzyskać dostęp do systemu skautingowego.</p>
+                    <div class="cta-buttons">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Logowanie</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Rejestracja</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="news-section">
+                <h2>Aktualności sportowe</h2>
+                <div class="news-grid">
+                    <div class="news-item">
+                        <div class="news-date">15.04.2023</div>
+                        <h3>Nowe talenty w lidze młodzieżowej</h3>
+                        <p>W ostatnich rozgrywkach ligi U-18 wyróżniło się kilku obiecujących zawodników...</p>
+                        <a href="#" class="read-more">Czytaj więcej</a>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">12.04.2023</div>
+                        <h3>Międzynarodowy turniej talentów</h3>
+                        <p>W przyszłym miesiącu odbędzie się prestiżowy turniej dla młodych talentów...</p>
+                        <a href="#" class="read-more">Czytaj więcej</a>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-date">10.04.2023</div>
+                        <h3>Nowe metody analizy wydajności zawodników</h3>
+                        <p>Naukowcy ze Sportowego Instytutu Badawczego opracowali nowe metody oceny...</p>
+                        <a href="#" class="read-more">Czytaj więcej</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-right">
+            {% if not current_user.is_authenticated %}
+                <div class="club-info">
+                    <h2>Zarządzanie Klubem</h2>
+                    <p>Jesteś przedstawicielem klubu sportowego? Skorzystaj z naszej platformy do:</p>
+                    <ul>
+                        <li>Przeglądania zawodników dodanych przez scoutów</li>
+                        <li>Monitorowania pracy scoutów</li>
+                        <li>Wyszukiwania talentów wśród amatorów</li>
+                    </ul>
+                    <div class="cta-buttons">
+                        <a href="{{ url_for('clubs.login') }}" class="btn btn-primary">Zaloguj się jako klub</a>
+                        <a href="{{ url_for('clubs.register') }}" class="btn btn-secondary">Zarejestruj klub</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="match-results">
+                <h2>Ostatnie wyniki</h2>
+                <div class="results-container">
+                    <div class="result-item">
+                        <div class="sport-tag football">Piłka nożna</div>
+                        <div class="teams">
+                            <span class="team">FC Barcelona</span>
+                            <span class="score">3:1</span>
+                            <span class="team">Real Madryt</span>
+                        </div>
+                        <div class="match-date">14.04.2023</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="sport-tag basketball">Koszykówka</div>
+                        <div class="teams">
+                            <span class="team">Chicago Bulls</span>
+                            <span class="score">98:105</span>
+                            <span class="team">LA Lakers</span>
+                        </div>
+                        <div class="match-date">13.04.2023</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="sport-tag volleyball">Siatkówka</div>
+                        <div class="teams">
+                            <span class="team">PGE Skra Bełchatów</span>
+                            <span class="score">3:1</span>
+                            <span class="team">Asseco Resovia</span>
+                        </div>
+                        <div class="match-date">12.04.2023</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="sport-tag handball">Piłka ręczna</div>
+                        <div class="teams">
+                            <span class="team">Vive Kielce</span>
+                            <span class="score">34:29</span>
+                            <span class="team">Wisła Płock</span>
+                        </div>
+                        <div class="match-date">11.04.2023</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upcoming-events">
+                <h2>Nadchodzące wydarzenia</h2>
+                <div class="calendar">
+                    <div class="calendar-item">
+                        <div class="event-date">
+                            <span class="day">20</span>
+                            <span class="month">KWI</span>
+                        </div>
+                        <div class="event-details">
+                            <h3>Liga Mistrzów: FC Barcelona vs PSG</h3>
+                            <p>Ćwierćfinał, rewanż</p>
+                            <span class="event-time">20:45</span>
+                        </div>
+                    </div>
+                    <div class="calendar-item">
+                        <div class="event-date">
+                            <span class="day">22</span>
+                            <span class="month">KWI</span>
+                        </div>
+                        <div class="event-details">
+                            <h3>NBA Playoffs: Bulls vs Celtics</h3>
+                            <p>Game 3</p>
+                            <span class="event-time">02:30</span>
+                        </div>
+                    </div>
+                    <div class="calendar-item">
+                        <div class="event-date">
+                            <span class="day">25</span>
+                            <span class="month">KWI</span>
+                        </div>
+                        <div class="event-details">
+                            <h3>Plus Liga: ZAKSA vs Jastrzębski Węgiel</h3>
+                            <p>Finał, mecz 1</p>
+                            <span class="event-time">18:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .welcome-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .hero-banner {
+        background: linear-gradient(rgba(10, 42, 74, 0.7), rgba(76, 40, 130, 0.7));
+        padding: 40px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero-banner h1 {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        color: var(--accent-color);
+    }
+    
+    .tagline {
+        font-size: 1.2rem;
+        color: var(--text-color);
+    }
+    
+    .home-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .content-left, .content-right {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .welcome-user, .auth-options, .club-info, .news-section, 
+    .match-results, .upcoming-events {
+        background-color: rgba(10, 42, 74, 0.7);
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .welcome-user h2, .auth-options h2, .club-info h2, 
+    .news-section h2, .match-results h2, .upcoming-events h2 {
+        color: var(--accent-color);
+        margin-bottom: 15px;
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 10px;
+    }
+    
+    .user-role {
+        background-color: var(--primary-color);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .news-grid {
+        display: grid;
+        gap: 15px;
+    }
+    
+    .news-item {
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 6px;
+    }
+    
+    .news-date {
+        font-size: 0.8rem;
+        color: var(--accent-color);
+        margin-bottom: 5px;
+    }
+    
+    .news-item h3 {
+        color: white;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    
+    .read-more {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--secondary-color);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    
+    .read-more:hover {
+        text-decoration: underline;
+    }
+    
+    .result-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .sport-tag {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .football {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .basketball {
+        background-color: #FF9800;
+        color: white;
+    }
+    
+    .volleyball {
+        background-color: #2196F3;
+        color: white;
+    }
+    
+    .handball {
+        background-color: #9C27B0;
+        color: white;
+    }
+    
+    .teams {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .team {
+        font-weight: bold;
+        color: white;
+    }
+    
+    .score {
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 3px 8px;
+        border-radius: 4px;
+        color: var(--accent-color);
+        font-weight: bold;
+    }
+    
+    .match-date {
+        text-align: right;
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+    
+    .calendar-item {
+        display: flex;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .event-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background-color: var(--primary-color);
+        border-radius: 8px;
+        margin-right: 15px;
+    }
+    
+    .day {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: white;
+        line-height: 1;
+    }
+    
+    .month {
+        font-size: 0.8rem;
+        color: #ddd;
+    }
+    
+    .event-details {
+        flex: 1;
+    }
+    
+    .event-details h3 {
+        color: white;
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    
+    .event-details p {
+        color: #bbb;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    
+    .event-time {
+        background-color: rgba(240, 197, 24, 0.2);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        color: var(--accent-color);
+    }
+    
+    .club-info ul {
+        margin-left: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .club-info li {
+        margin-bottom: 8px;
+        color: #ddd;
+    }
+    
+    .cta-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    @media (max-width: 768px) {
+        .home-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
