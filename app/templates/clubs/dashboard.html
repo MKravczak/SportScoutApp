@@ -9,9 +9,9 @@
     <div class="club-info-box">
         <div class="club-logo">
             {% if club.logo %}
-                <img src="{{ url_for('static', filename='uploads/club_logos/' + club.logo) }}" alt="{{ club.name }} logo">
+                <img src="{{ url_for('main.uploaded_file', filename='club_logos/' + club.logo) }}" alt="{{ club.name }} logo">
             {% else %}
-                <div class="placeholder-logo">{{ club.name[0] }}</div>
+                <div class="placeholder-logo">{{ club.name[0:2].upper() }}</div>
             {% endif %}
         </div>
         <div class="club-details">

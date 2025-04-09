@@ -18,12 +18,6 @@ class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Hasło', validators=[DataRequired()])
     password2 = PasswordField('Powtórz hasło', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Rola', choices=[
-        ('user', 'Użytkownik'),
-        ('scout', 'Scout'),
-        ('club_manager', 'Zarząd klubu'),
-        ('admin', 'Admin')
-    ], validators=[DataRequired()])
     submit = SubmitField('Zarejestruj się')
 
 
@@ -59,6 +53,11 @@ class ClubRegistrationForm(FlaskForm):
         club = Club.query.filter_by(name=name.data).first()
         if club:
             raise ValidationError('Klub o takiej nazwie już istnieje.')
+            
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError('Ten adres email jest już używany.')
 
 
 class ClubForm(FlaskForm):

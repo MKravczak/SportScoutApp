@@ -24,7 +24,7 @@
                         <tr>
                             <td>
                                 {% if scout.profile_picture %}
-                                    <img src="{{ url_for('static', filename=scout.profile_picture) }}" alt="{{ scout.username }}" class="scout-thumbnail">
+                                    <img src="{{ url_for('main.uploaded_file', filename=scout.profile_picture) }}" alt="{{ scout.username }}" class="scout-thumbnail">
                                 {% else %}
                                     <div class="scout-initial">{{ scout.username[0]|upper }}</div>
                                 {% endif %}

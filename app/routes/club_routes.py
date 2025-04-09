@@ -46,6 +46,18 @@ def register():
     
     form = ClubRegistrationForm()
     if form.validate_on_submit():
+        # Sprawdzenie czy email już istnieje
+        existing_user = User.query.filter_by(email=form.email.data).first()
+        if existing_user:
+            flash('Ten adres email jest już używany. Proszę użyć innego.', 'danger')
+            return render_template('clubs/register.html', title='Rejestracja Klubu', form=form)
+            
+        # Sprawdzenie czy nazwa klubu nie jest już używana jako nazwa użytkownika
+        existing_username = User.query.filter_by(username=form.name.data).first()
+        if existing_username:
+            flash('Ta nazwa klubu jest już używana jako nazwa użytkownika. Proszę użyć innej nazwy.', 'danger')
+            return render_template('clubs/register.html', title='Rejestracja Klubu', form=form)
+        
         # Najpierw utworzenie klubu
         club = Club(
             name=form.name.data,
@@ -63,14 +75,16 @@ def register():
             form.logo.data.save(filepath)
             club.logo = filename
         
+        # Zapisz klub w bazie, aby uzyskać jego ID
         db.session.add(club)
+        db.session.commit()
         
         # Następnie utworzenie użytkownika z rolą club_manager
         user = User(
             username=form.name.data,
             email=form.email.data,
             role='club_manager',
-            club_id=club.id
+            club_id=club.id  # Teraz club.id jest dostępne
         )
         user.set_password(form.password.data)
         
