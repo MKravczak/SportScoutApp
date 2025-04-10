@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+
+{% block title %}Porównanie zawodników | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="compare-all-tests">
+    <div class="header-section">
+        <h1>Porównanie zawodników</h1>
+        <div class="player-info">
+            <span>Wybrani zawodnicy:</span>
+            <div class="players-list">
+                {% for player in players %}
+                    <span class="player-badge">{{ player.first_name }} {{ player.last_name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Nowa sekcja dla wykresu radarowego -->
+    <div class="radar-chart-container card">
+        <h2>Podsumowanie wyników (Wykres Radarowy)</h2>
+        {% if comparison_data %}
+            <canvas id="radar-comparison-chart"></canvas>
+            <p class="chart-note">Uwaga: Wyniki zostały znormalizowane do skali 0-100, gdzie 100 oznacza najlepszy wynik w danym teście wśród porównywanych zawodników.</p>
+        {% else %}
+            <p>Brak wspólnych testów dla wybranych zawodników do wygenerowania wykresu radarowego.</p>
+        {% endif %}
+    </div>
+
+    {# Nagłówek PRZED kontenerem siatki #}
+    <h2 class="section-title">Wyniki poszczególnych testów</h2>
+
+    <div class="tests-container"> {# Siatka stosowana TYLKO do kart wewnątrz tego diva #}
+        {% if comparison_data %}
+            {% for test_id, test_data in comparison_data.items() %}
+                {% if test_data.players %}
+                    <div class="test-card card">
+                        <h2>{{ test_data.test_name }}</h2>
+                        <div class="test-info">
+                            <span>Jednostka: {{ test_data.unit }}</span>
+                            <span>{% if test_data.is_lower_better %}Niższy wynik jest lepszy{% else %}Wyższy wynik jest lepszy{% endif %}</span>
+                        </div>
+                        
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Zawodnik</th>
+                                        <th>Najnowszy wynik</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player_id, player_data in test_data.players.items() %}
+                                        <tr>
+                                            <td>{{ player_data.player_name }}</td>
+                                            <td class="result-value">{{ player_data.result }} {{ test_data.unit }}</td>
+                                            <td>{{ player_data.date }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="chart_{{ loop.index }}" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="card no-data">
+                <p>Brak wspólnych testów dla wybranych zawodników.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="action-buttons-container">
+        <a href="{{ url_for('tests.compare_players') }}" class="btn btn-primary">Nowe porównanie</a>
+        <a href="{{ url_for('tests.list') }}" class="btn btn-secondary">Powrót do listy testów</a>
+    </div>
+</section>
+
+<!-- Dodanie biblioteki Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var comparisonData = JSON.parse('{{ comparison_data|tojson|safe }}');
+        var testStats = JSON.parse('{{ test_stats|tojson|safe }}'); // Pobierz statystyki min/max dla testów
+        var playersData = JSON.parse('{{ players_list_json|tojson|safe }}'); // Użyj nowej zmiennej
+        
+        // Kolory dla zawodników
+        var colors = [
+            'rgba(75, 192, 192, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+        ];
+        
+        // Przygotowanie map kolorów dla zawodników (użyj playersData)
+        var playerColors = {};
+        playersData.forEach(function(player, i) {
+             playerColors[player.id] = colors[i % colors.length];
+        });
+        
+        // Przygotowanie danych dla wykresu radarowego
+        var radarChartElement = document.getElementById('radar-comparison-chart');
+        if (radarChartElement && Object.keys(comparisonData).length > 0) {
+            var ctxRadar = radarChartElement.getContext('2d');
+            var radarLabels = []; // Nazwy testów
+            var radarDatasets = []; // Dane dla każdego gracza
+
+            // Mapa graczy dla łatwego dostępu
+            var playerMap = {};
+            playersData.forEach(function(player, index) {
+                playerMap[player.id] = {
+                    name: player.first_name + ' ' + player.last_name,
+                    color: colors[index % colors.length]
+                };
+                radarDatasets.push({
+                    label: player.first_name + ' ' + player.last_name,
+                    data: [],
+                    fill: true,
+                    backgroundColor: colors[index % colors.length].replace('1)', '0.2)'),
+                    borderColor: colors[index % colors.length],
+                    pointBackgroundColor: colors[index % colors.length],
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: colors[index % colors.length]
+                });
+            });
+
+            // Przetwarzanie danych dla wykresu radarowego
+            for (var testId in comparisonData) {
+                if (comparisonData.hasOwnProperty(testId)) {
+                    var testData = comparisonData[testId];
+                    var stats = testStats[testId];
+
+                    if (!testData.players || Object.keys(testData.players).length === 0 || !stats) {
+                        continue; // Pomiń testy bez graczy lub statystyk
+                    }
+
+                    radarLabels.push(testData.test_name);
+
+                    var min = stats.min;
+                    var max = stats.max;
+                    var range = max - min;
+                    if (range === 0) range = 1; // Unikaj dzielenia przez zero
+
+                    // Przypisz znormalizowane wyniki dla każdego gracza
+                    radarDatasets.forEach(function(dataset, playerIndex) {
+                        var playerId = playersData[playerIndex].id;
+                        var score = null;
+                        if (testData.players[playerId]) {
+                            var rawScore = testData.players[playerId].result;
+                            // Normalizacja
+                            if (testData.is_lower_better) {
+                                // Niższy wynik lepszy (0-100, gdzie 100 to min)
+                                score = 100 * (1 - ((rawScore - min) / range));
+                            } else {
+                                // Wyższy wynik lepszy (0-100, gdzie 100 to max)
+                                score = 100 * ((rawScore - min) / range);
+                            }
+                            // Ogranicz do 0-100 na wszelki wypadek
+                             score = Math.max(0, Math.min(100, score));
+                        } else {
+                             score = 0; // Lub inna wartość domyślna, jeśli gracz nie ma wyniku
+                        }
+                        dataset.data.push(score);
+                    });
+                }
+            }
+            
+             // Ustawienie maksymalnej wartości dla skali (np. 100 dla normalizacji)
+             var maxScaleValue = 100;
+
+            // Tworzenie wykresu radarowego
+            new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: radarLabels,
+                    datasets: radarDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            },
+                            pointLabels: {
+                                color: '#ccc',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            ticks: {
+                                backdropColor: 'rgba(0, 0, 0, 0.5)', // Tło dla etykiet osi
+                                color: '#fff',
+                                stepSize: 20 // Krok co 20 na skali 0-100
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: maxScaleValue
+                        }
+                    },
+                     plugins: {
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                     let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.r !== null) {
+                                        // Pokaż znormalizowany wynik (0-100)
+                                        label += context.parsed.r.toFixed(1);
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                         legend: {
+                            labels: {
+                                color: '#ccc' // Kolor etykiet legendy
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Istniejący kod do tworzenia wykresów słupkowych dla każdego testu
+        var chartIndex = 1;
+        for (var testId in comparisonData) {
+            if (comparisonData.hasOwnProperty(testId)) {
+                var testData = comparisonData[testId];
+                
+                if (!testData.players || Object.keys(testData.players).length === 0) {
+                    continue;
+                }
+                
+                var canvasId = 'chart_' + chartIndex;
+                var canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    continue;
+                }
+                
+                var ctx = canvas.getContext('2d');
+                
+                // Przygotowanie danych
+                var labels = [];
+                var dataPoints = [];
+                var backgroundColors = [];
+                var borderColors = [];
+                
+                for (var playerId in testData.players) {
+                    if (testData.players.hasOwnProperty(playerId)) {
+                        var playerData = testData.players[playerId];
+                        labels.push(playerData.player_name);
+                        dataPoints.push(playerData.result);
+                        backgroundColors.push(playerColors[playerId].replace('1)', '0.6)'));
+                        borderColors.push(playerColors[playerId]);
+                    }
+                }
+                
+                // Tworzenie wykresu słupkowego
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: testData.test_name,
+                            data: dataPoints,
+                            backgroundColor: backgroundColors,
+                            borderColor: borderColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: testData.is_lower_better
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.raw + ' ' + testData.unit;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                chartIndex++;
+            }
+        }
+    });
+</script>
+
+<style>
+    .compare-all-tests section {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        background-color: #222639;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #f0a030;
+        color: white;
+    }
+    
+    .header-section {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 30px;
+        color: white;
+        text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+        margin-bottom: 10px;
+    }
+    
+    .player-info {
+        display: flex;
+        flex-direction: column;
+        color: white;
+        text-shadow: 0 0 1px #000000;
+        margin-bottom: 10px;
+    }
+    
+    .players-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 5px;
+    }
+    
+    .player-badge {
+        background-color: #2d3250;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        border: 1px solid #f0a030;
+    }
+    
+    .tests-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+        gap: 20px;
+    }
+    
+    .test-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .test-card h2 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: white;
+        font-size: 20px;
+    }
+    
+    .test-info {
+        display: flex;
+        justify-content: space-between;
+        color: #ccc;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    
+    .results-table-container {
+        margin-bottom: 20px;
+    }
+    
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .results-table th {
+        background-color: #f0a030;
+        color: white;
+        padding: 8px 10px;
+        text-align: left;
+        font-size: 14px;
+    }
+    
+    .results-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #444;
+        font-size: 14px;
+        color: white;
+    }
+    
+    .result-value {
+        font-weight: bold;
+        color: #f0c518;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 250px;
+        margin-top: auto;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .no-data {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 50px 20px;
+    }
+    
+    .no-data p {
+        margin-bottom: 20px;
+        color: white;
+        font-size: 18px;
+    }
+    
+    .action-buttons-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background-color: #f0a030;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #e08010;
+    }
+    
+    .btn-secondary {
+        background-color: #2d3250;
+        color: white;
+        border: 1px solid #f0a030;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #373d5c;
+    }
+    
+    @media (max-width: 768px) {
+        .tests-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .chart-container {
+            height: 200px;
+        }
+        
+        .action-buttons-container {
+            flex-direction: column;
+        }
+    }
+
+    .radar-chart-container {
+        margin-bottom: 30px; /* Odstęp pod wykresem radarowym */
+        height: 500px; /* Ustawienie wysokości kontenera dla radaru */
+        position: relative; /* Potrzebne dla poprawnego pozycjonowania notatki */
+    }
+
+    .radar-chart-container canvas {
+        max-height: 450px; /* Maksymalna wysokość samego płótna */
+        width: 100% !important; /* Upewnij się, że szerokość jest na 100% */
+    }
+
+    .radar-chart-container .chart-note {
+        font-size: 0.8em;
+        color: #aaa;
+        text-align: center;
+        margin-top: 10px;
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+    }
+
+    .section-title {
+        font-size: 24px;
+        color: #e0e0e0;
+        margin-bottom: 20px;
+        margin-top: 40px; /* Zwiększony odstęp nad nagłówkiem */
+        text-align: center;
+        border-bottom: 1px solid #f0a030;
+        padding-bottom: 10px;
+        /* Nie jest już częścią siatki tests-container */
+    }
+
+    /* Poprawki dla kontenera testu */
+    .test-card .chart-container canvas {
+        min-height: 200px; /* Zmniejszenie minimalnej wysokości dla wykresów słupkowych */
+        max-height: 250px;
+    }
+</style>
+{% endblock %} 

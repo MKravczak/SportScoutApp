@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista testów | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="tests-list">
+    <div class="header-section">
+        <h1>Lista testów</h1>
+        {% if current_user.role in ['admin', 'scout'] %}
+            <div class="action-buttons">
+                <a href="{{ url_for('tests.add_test') }}" class="btn btn-primary">Dodaj nowy test</a>
+                <a href="{{ url_for('tests.compare_players') }}" class="btn btn-primary">Porównaj zawodników</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="filters card">
+        <h2>Filtry</h2>
+        <form method="get" action="{{ url_for('tests.list') }}">
+            <div class="form-group">
+                <label for="sport">Dyscyplina:</label>
+                <select name="sport" id="sport" class="form-control" onchange="this.form.submit()">
+                    <option value="">Wszystkie dyscypliny</option>
+                    {% for sport in sports %}
+                        <option value="{{ sport.id }}" {% if current_sport_id == sport.id %}selected{% endif %}>{{ sport.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <div class="tests-container card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nazwa testu</th>
+                    <th>Dyscyplina</th>
+                    <th>Typ</th>
+                    <th>Jednostka</th>
+                    <th>Opis</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if tests %}
+                    {% for test in tests %}
+                        <tr>
+                            <td>{{ test.name }}</td>
+                            <td>{{ test.sport.name }}</td>
+                            <td>{{ test.type }}</td>
+                            <td>{{ test.unit }}</td>
+                            <td>{{ test.description|truncate(50) }}</td>
+                            <td>
+                                {% if current_user.role in ['admin', 'scout'] %}
+                                    <a href="{{ url_for('tests.edit', test_id=test.id) }}" class="btn btn-sm btn-primary">Edytuj</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">Brak testów do wyświetlenia</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<style>
+    .tests-list section {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        background-color: #222639;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #f0a030;
+        color: white;
+    }
+    
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 30px;
+        color: white;
+        text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-primary {
+        background-color: #f0a030;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    .btn-primary:hover {
+        background-color: #e08010;
+    }
+    
+    .filters {
+        margin-bottom: 20px;
+    }
+    
+    .filters h2 {
+        font-size: 18px;
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: white;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        color: white;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #2d3250;
+        color: white;
+    }
+    
+    .form-control option {
+        background-color: #2d3250;
+        color: white;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: white;
+    }
+    
+    .data-table th {
+        background-color: #f0a030;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+    
+    .data-table td {
+        padding: 10px;
+        border-bottom: 1px solid #444;
+    }
+    
+    .data-table tr:hover {
+        background-color: #2d3250;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+        .header-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .data-table {
+            font-size: 14px;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 8px 5px;
+        }
+    }
+</style>
+{% endblock %} 

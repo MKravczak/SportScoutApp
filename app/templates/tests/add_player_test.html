@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Dodaj test dla zawodnika | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="add-player-test">
+    <div class="header-section">
+        <h1>Dodaj nowy test</h1>
+        {% if player %}
+        <div class="player-info">
+            <span class="player-name">{{ player.first_name }} {{ player.last_name }}</span>
+            <span class="player-sport">{{ player.sport.name }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="form-container card">
+        <form method="post" action="{{ url_for('tests.add_player_test', player_id=player.id if player else None) }}">
+            {{ form.csrf_token }}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <h4>Formularz zawiera błędy:</h4>
+                <ul>
+                    {% for field, errors in form.errors.items() %}
+                        <li>{{ field }}: {{ ', '.join(errors) }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="player_id">Zawodnik:</label>
+                <select id="player_id" name="player" class="form-control" {% if player %}disabled{% endif %} required>
+                    {% if player %}
+                        <option value="{{ player.id }}" selected>{{ player.first_name }} {{ player.last_name }}</option>
+                    {% else %}
+                        <option value="">Wybierz zawodnika</option>
+                        {% for player_item in players %}
+                            <option value="{{ player_item.id }}">{{ player_item.first_name }} {{ player_item.last_name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                {% if player %}
+                    <input type="hidden" name="player" value="{{ player.id }}">
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="test_id">Test:</label>
+                <select id="test_id" name="test" class="form-control" required>
+                    <option value="">Wybierz test</option>
+                    {% for test in sport_tests %}
+                        <option value="{{ test.id }}" data-unit="{{ test.unit }}">{{ test.name }} ({{ test.type }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="result">Wynik:</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="result" name="result" class="form-control" step="0.01" required>
+                        <span id="unit-display" class="unit-label"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="test_date">Data testu:</label>
+                    <input type="datetime-local" id="test_date" name="test_date" class="form-control" value="{{ now.strftime('%Y-%m-%dT%H:%M') }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Uwagi (opcjonalnie):</label>
+                <textarea id="notes" name="notes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="action-buttons">
+                {% if player %}
+                    <a href="{{ url_for('tests.player_tests', player_id=player.id) }}" class="btn btn-secondary">Anuluj</a>
+                {% else %}
+                    <a href="{{ url_for('tests.list') }}" class="btn btn-secondary">Anuluj</a>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Zapisz test</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<style>
+    .add-player-test {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    
+    .alert ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+    
+    .header-section {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 30px;
+        color: white;
+        text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+    }
+    
+    .player-info {
+        display: flex;
+        gap: 15px;
+        color: white;
+        text-shadow: 0 0 1px #000000;
+    }
+    
+    .player-name, .player-sport {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .form-row .form-group {
+        flex: 1;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    select.form-control {
+        height: 40px;
+    }
+    
+    .input-with-unit {
+        display: flex;
+        align-items: center;
+    }
+    
+    .input-with-unit .form-control {
+        flex: 1;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .unit-label {
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-left: none;
+        border-radius: 0 4px 4px 0;
+        color: #555;
+        min-width: 40px;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    
+    .btn-primary {
+        background-color: #4a69bd;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #3c5aa8;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sportTestSelect = document.getElementById('test_id');
+        const unitDisplay = document.getElementById('unit-display');
+        
+        // Aktualizacja wyświetlanej jednostki przy zmianie testu
+        sportTestSelect.addEventListener('change', function() {
+            const selectedOption = sportTestSelect.options[sportTestSelect.selectedIndex];
+            unitDisplay.textContent = selectedOption.dataset.unit || '';
+        });
+        
+        // Inicjalne ustawienie jednostki, jeśli test jest już wybrany
+        if (sportTestSelect.selectedIndex > 0) {
+            const selectedOption = sportTestSelect.options[sportTestSelect.selectedIndex];
+            unitDisplay.textContent = selectedOption.dataset.unit || '';
+        }
+    });
+</script>
+{% endblock %} 

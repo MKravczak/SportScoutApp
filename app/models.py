@@ -47,6 +47,7 @@ class Sport(db.Model):
     name = db.Column(db.String(64), unique=True, nullable=False)
     description = db.Column(db.Text)
     players = db.relationship('Player', backref='sport', lazy='dynamic')
+    sport_tests = db.relationship('SportTest', backref='sport', lazy='dynamic')
 
 
 class Player(db.Model):
@@ -64,6 +65,7 @@ class Player(db.Model):
     scout_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     physical_tests = db.relationship('PhysicalTest', backref='player', lazy='dynamic')
     match_stats = db.relationship('MatchStat', backref='player', lazy='dynamic')
+    player_tests = db.relationship('PlayerTest', backref='player', lazy='dynamic')
 
 
 class PhysicalTest(db.Model):
@@ -76,6 +78,30 @@ class PhysicalTest(db.Model):
     endurance = db.Column(db.Float)  # w sekundach lub metrach zależnie od testu
     strength = db.Column(db.Float)  # w kg
     notes = db.Column(db.Text)
+
+
+class SportTest(db.Model):
+    __tablename__ = 'sport_test'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    type = db.Column(db.String(50))  # np. "sprint", "siła", "wytrzymałość", "technika"
+    unit = db.Column(db.String(20))  # np. "sekundy", "metry", "kilogramy", "punkty"
+    is_lower_better = db.Column(db.Boolean, default=True)  # True jeśli niższy wynik jest lepszy (np. czas)
+    sport_id = db.Column(db.Integer, db.ForeignKey('sport.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    player_tests = db.relationship('PlayerTest', backref='sport_test', lazy='dynamic', foreign_keys='PlayerTest.test_id')
+
+
+class PlayerTest(db.Model):
+    __tablename__ = 'player_test'
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    test_id = db.Column(db.Integer, db.ForeignKey('sport_test.id'))
+    result = db.Column(db.Float)
+    test_date = db.Column(db.DateTime, default=datetime.utcnow)
+    notes = db.Column(db.Text)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 class Match(db.Model):

@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Analiza wyników - {{ player.first_name }} {{ player.last_name }} | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="player-analysis">
+    <div class="header-section">
+        <h1>Analiza wyników</h1>
+        <div class="player-info">
+            <span class="player-name">Zawodnik: {{ player.first_name }} {{ player.last_name }}</span>
+            <span class="player-sport">Dyscyplina: {{ player.sport.name }}</span>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{{ url_for('tests.add_player_test', player_id=player.id) }}" class="btn btn-primary">Dodaj nowy test</a>
+            <a href="{{ url_for('tests.player_tests', player_id=player.id) }}" class="btn btn-primary">Zobacz wszystkie testy</a>
+            <a href="{{ url_for('tests.compare_players') }}?player_id={{ player.id }}" class="btn btn-primary">Porównaj z innymi zawodnikami</a>
+        </div>
+    </div>
+
+    <div class="analysis-container">
+        {% if chart_data %}
+            {% for test_name, data in chart_data.items() %}
+                <div class="chart-card card">
+                    <h2>{{ test_name }}</h2>
+                    <div class="chart-description">
+                        <p>Jednostka: {{ data.unit }}</p>
+                        <p>{% if data.is_lower_better %}Niższy wynik jest lepszy{% else %}Wyższy wynik jest lepszy{% endif %}</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart_{{ loop.index }}" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card no-data">
+                <p>Brak danych testowych dla tego zawodnika.</p>
+                <a href="{{ url_for('tests.add_player_test', player_id=player.id) }}" class="btn btn-primary">Dodaj pierwszy test</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Podsumowanie trendu -->
+    {% if chart_data %}
+        <div class="summary-card card">
+            <h2>Podsumowanie</h2>
+            <div class="summary-content">
+                <p>Na podstawie przeprowadzonych testów, zawodnik pokazuje:</p>
+                <ul>
+                    {% for test_name, data in chart_data.items() %}
+                        {% if data.results|length > 1 %}
+                            {% set first_result = data.results[0] %}
+                            {% set last_result = data.results[-1] %}
+                            {% set trend = ((last_result - first_result) / first_result * 100)|round(2) %}
+                            
+                            <li>
+                                <strong>{{ test_name }}:</strong>
+                                {% if (data.is_lower_better and trend < 0) or (not data.is_lower_better and trend > 0) %}
+                                    <span class="trend-positive">Poprawa o {{ trend|abs }}%</span>
+                                {% elif (data.is_lower_better and trend > 0) or (not data.is_lower_better and trend < 0) %}
+                                    <span class="trend-negative">Spadek o {{ trend|abs }}%</span>
+                                {% else %}
+                                    <span class="trend-neutral">Bez zmian</span>
+                                {% endif %}
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+<!-- Dodanie biblioteki Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dane dla wykresów
+        const chartData = {{ chart_data|tojson }};
+        
+        // Tworzenie wykresów
+        let i = 1;
+        for (const [testName, data] of Object.entries(chartData)) {
+            const ctx = document.getElementById(`chart_${i}`).getContext('2d');
+            
+            // Określenie kolorów w zależności od tego, czy niższy wynik jest lepszy
+            let borderColor, backgroundColor;
+            if (data.is_lower_better) {
+                borderColor = 'rgba(75, 192, 192, 1)';
+                backgroundColor = 'rgba(75, 192, 192, 0.2)';
+            } else {
+                borderColor = 'rgba(54, 162, 235, 1)';
+                backgroundColor = 'rgba(54, 162, 235, 0.2)';
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [{
+                        label: `${testName} (${data.unit})`,
+                        data: data.results,
+                        borderColor: borderColor,
+                        backgroundColor: backgroundColor,
+                        borderWidth: 2,
+                        tension: 0.1,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw} ${data.unit}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            i++;
+        }
+    });
+</script>
+
+<style>
+    .player-analysis section {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        background-color: #222639;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #f0a030;
+        color: white;
+    }
+    
+    .header-section {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 30px;
+        color: white;
+        text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+    }
+    
+    .player-info {
+        display: flex;
+        gap: 20px;
+        color: white;
+        text-shadow: 0 0 1px #000000;
+    }
+    
+    .player-name, .player-sport {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background-color: #f0a030;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #e08010;
+    }
+    
+    .analysis-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+        gap: 20px;
+    }
+    
+    .chart-card {
+        height: 100%;
+    }
+    
+    .chart-card h2 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: white;
+        font-size: 20px;
+    }
+    
+    .chart-description {
+        margin-bottom: 15px;
+        color: #ccc;
+        font-size: 14px;
+    }
+    
+    .chart-description p {
+        margin: 5px 0;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 50px 20px;
+    }
+    
+    .no-data p {
+        margin-bottom: 20px;
+        color: white;
+        font-size: 18px;
+    }
+    
+    .summary-card h2 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: white;
+        font-size: 20px;
+    }
+    
+    .summary-content {
+        color: white;
+    }
+    
+    .summary-content ul {
+        margin-top: 10px;
+        padding-left: 20px;
+    }
+    
+    .summary-content li {
+        margin-bottom: 8px;
+    }
+    
+    .trend-positive {
+        color: #2ecc71;
+        font-weight: bold;
+    }
+    
+    .trend-negative {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    
+    .trend-neutral {
+        color: #bdc3c7;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .analysis-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .player-info {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %} 

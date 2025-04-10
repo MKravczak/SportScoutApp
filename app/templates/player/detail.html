@@ -9,7 +9,8 @@
         {% if current_user.role in ['scout', 'admin'] and (current_user.role == 'admin' or player.scout_id == current_user.id) %}
             <div class="action-buttons">
                 <a href="{{ url_for('players.edit', player_id=player.id) }}" class="btn btn-primary">Edytuj</a>
-                <a href="{{ url_for('players.add', player_id=player.id) }}" class="btn btn-primary">Dodaj test</a>
+                <a href="{{ url_for('tests.add_player_test', player_id=player.id) }}" class="btn btn-primary">Dodaj test</a>
+                <a href="{{ url_for('tests.player_analysis', player_id=player.id) }}" class="btn btn-primary">Analiza testów</a>
                 <a href="{{ url_for('players.add', player_id=player.id) }}" class="btn btn-primary">Dodaj statystyki meczowe</a>
             </div>
         {% endif %}
@@ -57,8 +58,42 @@
     </div>
 
     <div class="player-tests card">
-        <h2>Testy sprawnościowe</h2>
-        {% if player.physical_tests.count() > 0 %}
+        <div class="header-section">
+            <h2>Testy sprawnościowe</h2>
+            <div class="action-buttons">
+                <a href="{{ url_for('tests.player_tests', player_id=player.id) }}" class="btn btn-primary">Zobacz wszystkie testy</a>
+            </div>
+        </div>
+        
+        {% if player.player_tests.all() %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Test</th>
+                        <th>Wynik</th>
+                        <th>Jednostka</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in (player.player_tests.all()|sort(attribute='test_date', reverse=True))[0:5] %}
+                        <tr>
+                            <td>{{ test.test_date.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ test.sport_test.name if test.sport_test else 'Brak nazwy testu' }}</td>
+                            <td>{{ test.result }}</td>
+                            <td>{{ test.sport_test.unit if test.sport_test else 'Brak jednostki' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Brak testów sprawnościowych.</p>
+        {% endif %}
+    </div>
+
+    <div class="player-tests card">
+        <h2>Testy fizyczne (stary format)</h2>
+        {% if player.physical_tests.all() %}
             <table class="data-table">
                 <thead>
                     <tr>
@@ -71,7 +106,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for test in player.physical_tests %}
+                    {% for test in player.physical_tests.all() %}
                         <tr>
                             <td>{{ test.test_date.strftime('%d-%m-%Y') }}</td>
                             <td>{{ test.sprint_100m }} s</td>
@@ -84,13 +119,13 @@
                 </tbody>
             </table>
         {% else %}
-            <p>Brak testów sprawnościowych.</p>
+            <p>Brak testów.</p>
         {% endif %}
     </div>
 
     <div class="player-matches card">
         <h2>Statystyki meczowe</h2>
-        {% if player.match_stats.count() > 0 %}
+        {% if player.match_stats.all() %}
             <table class="data-table">
                 <thead>
                     <tr>
@@ -104,7 +139,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for stat in player.match_stats %}
+                    {% for stat in player.match_stats.all() %}
                         <tr>
                             <td>{{ stat.match.date.strftime('%d-%m-%Y') }}</td>
                             <td>{{ stat.match.opponent }}</td>
@@ -129,11 +164,13 @@
     }
     
     .card {
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: #222639;
         border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         padding: 20px;
         margin-bottom: 20px;
+        border: 2px solid #f0a030;
+        color: white;
     }
     
     .header-section {
@@ -147,7 +184,7 @@
         margin: 0;
         font-size: 30px;
         color: white;
-         text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+        text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
     }
     
     .action-buttons {
@@ -156,7 +193,7 @@
     }
     
     .btn-primary {
-        background-color: #4a69bd;
+        background-color: #f0a030;
         color: white;
         border: none;
         padding: 8px 16px;
@@ -167,7 +204,7 @@
     }
     
     .btn-primary:hover {
-        background-color: #3c5aa8;
+        background-color: #e08010;
     }
     
     .player-header {
@@ -181,7 +218,7 @@
     }
     
     .player-details h2 {
-        color: #333;
+        color: white;
         margin-top: 0;
         margin-bottom: 15px;
         font-size: 20px;
@@ -195,12 +232,12 @@
     
     .player-details dt {
         font-weight: bold;
-        color: #555;
+        color: #ccc;
     }
     
     .player-details dd {
         margin-left: 0;
-        color: #333;
+        color: white;
     }
     
     .player-photo {
@@ -220,7 +257,7 @@
     }
     
     .player-tests h2, .player-matches h2 {
-        color: #333;
+        color: white;
         margin-top: 0;
         margin-bottom: 15px;
         font-size: 20px;
@@ -230,24 +267,23 @@
         width: 100%;
         border-collapse: collapse;
         margin-top: 10px;
+        color: white;
     }
     
     .data-table th {
-        background-color: #4a69bd;
+        background-color: #f0a030;
         color: white;
         padding: 10px;
         text-align: left;
-        font-weight: normal;
     }
     
     .data-table td {
         padding: 10px;
-        border-bottom: 1px solid #eee;
-        color: #555;
+        border-bottom: 1px solid #444;
     }
     
     .data-table tr:hover {
-        background-color: #f5f5f5;
+        background-color: #2d3250;
     }
     
     @media (max-width: 768px) {

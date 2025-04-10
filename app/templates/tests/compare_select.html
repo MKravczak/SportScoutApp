@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Porównanie zawodników | Scout Talent{% endblock %}
+
+{% block content %}
+<section class="compare-select">
+    <div class="header-section">
+        <h1>Porównanie zawodników</h1>
+    </div>
+
+    <div class="form-container card">
+        <h2>Wybierz zawodników i test do porównania</h2>
+        
+        <form method="get" action="{{ url_for('tests.compare_players') }}">
+            <div class="form-group">
+                <label for="player_id">Zawodnicy (wybierz co najmniej dwóch):</label>
+                <div class="players-container">
+                    {% for player in players %}
+                        <div class="player-checkbox">
+                            <input type="checkbox" name="player_id" id="player_{{ player.id }}" value="{{ player.id }}">
+                            <label for="player_{{ player.id }}">{{ player.first_name }} {{ player.last_name }} ({{ player.sport.name }})</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="test_id">Test do porównania (opcjonalnie):</label>
+                <select name="test_id" id="test_id" class="form-control">
+                    <option value="">Wszystkie testy</option>
+                    {% for test in tests %}
+                        <option value="{{ test.id }}">{{ test.name }} ({{ test.sport.name }})</option>
+                    {% endfor %}
+                </select>
+                <div class="help-text">Jeśli nie wybierzesz konkretnego testu, zostanie wyświetlone porównanie wszystkich wspólnych testów dla wybranych zawodników.</div>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('tests.list') }}" class="btn btn-secondary">Anuluj</a>
+                <button type="submit" class="btn btn-primary">Porównaj</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<style>
+    .compare-select section {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 30px;
+        color: white;
+        text-shadow: 0 0 1px #000000, 0 0 1px #000000, 0 0 11px #f0c518, 0 0 20px #f0c518;
+    }
+    
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-container h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #333;
+        font-size: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .players-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .player-checkbox {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .player-checkbox input[type="checkbox"] {
+        margin-right: 10px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    
+    .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background-color: #4a69bd;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #3c5aa8;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Walidacja formularza - sprawdzenie czy wybrano co najmniej dwóch zawodników
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            const checkboxes = document.querySelectorAll('input[name="player_id"]:checked');
+            if (checkboxes.length < 2) {
+                event.preventDefault();
+                alert('Musisz wybrać co najmniej dwóch zawodników do porównania.');
+            }
+        });
+    });
+</script>
+{% endblock %} 

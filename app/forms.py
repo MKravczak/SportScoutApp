@@ -1,9 +1,10 @@
 # app/forms.py
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, FloatField, DateField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
-from app.models import User, Sport, Club
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, FloatField, DateField, IntegerField, RadioField, DateTimeField
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Optional
+from app.models import User, Sport, Club, SportTest
+from datetime import datetime
 
 
 class LoginForm(FlaskForm):
@@ -109,4 +110,45 @@ class PlayerForm(FlaskForm):
     height = FloatField('Wzrost (cm)', validators=[DataRequired()])
     weight = FloatField('Waga (kg)', validators=[DataRequired()])
     photo = FileField('Zdjęcie zawodnika', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Tylko pliki obrazów!')])
+    submit = SubmitField('Zapisz')
+
+
+class SportTestForm(FlaskForm):
+    name = StringField('Nazwa testu', validators=[DataRequired()])
+    description = TextAreaField('Opis testu')
+    type = SelectField('Typ testu', choices=[
+        ('sprint', 'Sprint'),
+        ('strength', 'Siła'),
+        ('endurance', 'Wytrzymałość'),
+        ('agility', 'Zwinność'),
+        ('technique', 'Technika'),
+        ('coordination', 'Koordynacja'),
+        ('other', 'Inny')
+    ], validators=[DataRequired()])
+    unit = StringField('Jednostka miary (np. sekundy, metry)', validators=[DataRequired()])
+    is_lower_better = RadioField('Czy niższy wynik jest lepszy?', choices=[
+        ('true', 'Tak (np. czas biegu)'),
+        ('false', 'Nie (np. długość skoku)')
+    ], validators=[DataRequired()])
+    sport = SelectField('Dyscyplina', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Zapisz test')
+    
+    def validate_name(self, name):
+        # Sprawdzanie unikalności nazwy testu dla danej dyscypliny
+        if hasattr(self, 'sport') and self.sport.data:
+            test = SportTest.query.filter_by(name=name.data, sport_id=self.sport.data).first()
+            if test and test.id != getattr(self, '_obj_id', None):
+                raise ValidationError('Test o takiej nazwie już istnieje dla tej dyscypliny.')
+                
+    def is_lower_better_coerce(self):
+        # Konwersja 'true'/'false' na wartości boolowskie
+        return self.is_lower_better.data == 'true'
+
+
+class PlayerTestForm(FlaskForm):
+    player = SelectField('Zawodnik', validators=[DataRequired()], coerce=int)
+    test = SelectField('Test', validators=[DataRequired()], coerce=int)
+    result = FloatField('Wynik', validators=[DataRequired()])
+    test_date = DateTimeField('Data testu', format='%Y-%m-%dT%H:%M', validators=[DataRequired()], default=datetime.now)
+    notes = TextAreaField('Uwagi')
     submit = SubmitField('Zapisz')

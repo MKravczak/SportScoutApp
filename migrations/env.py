@@ -1,6 +1,9 @@
 import logging
 from logging.config import fileConfig
 
+# Importuj modele aplikacji
+from app.models import User, Club, Sport, Player, PhysicalTest, SportTest, PlayerTest, Match, MatchStat
+
 from flask import current_app
 
 from alembic import context
@@ -65,7 +68,7 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=get_metadata(), literal_binds=True
+        url=url, target_metadata=target_db.metadata, literal_binds=True
     )
 
     with context.begin_transaction():
@@ -99,7 +102,7 @@ def run_migrations_online():
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=get_metadata(),
+            target_metadata=target_db.metadata,
             **conf_args
         )
 

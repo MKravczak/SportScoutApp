@@ -20,7 +20,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
 
     # Register blueprints
-    from app.routes import main, auth, players, admin, clubs
+    from app.routes import main, auth, players, admin, clubs, tests
     from app.routes.api_routes import api
     
     app.register_blueprint(main)
@@ -29,6 +29,7 @@ def create_app(config_class=Config):
     app.register_blueprint(admin, url_prefix='/admin')
     app.register_blueprint(api, url_prefix='/api')
     app.register_blueprint(clubs, url_prefix='/clubs')
+    app.register_blueprint(tests, url_prefix='/tests')
 
     # Register error handlers
     @app.errorhandler(404)
