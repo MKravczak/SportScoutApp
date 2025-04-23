@@ -21,7 +21,7 @@
         <h2>Podsumowanie wyników (Wykres Radarowy)</h2>
         {% if comparison_data %}
             <canvas id="radar-comparison-chart"></canvas>
-            <p class="chart-note">Uwaga: Wyniki zostały znormalizowane do skali 0-100, gdzie 100 oznacza najlepszy wynik w danym teście wśród porównywanych zawodników.</p>
+            <p class="chart-note">Uwaga: Wyniki zostały znormalizowane do skali 20-100, gdzie wyższe wartości oznaczają lepszy wynik w danym teście względem innych zawodników.</p>
         {% else %}
             <p>Brak wspólnych testów dla wybranych zawodników do wygenerowania wykresu radarowego.</p>
         {% endif %}
@@ -111,7 +111,20 @@
         if (radarChartElement && Object.keys(comparisonData).length > 0) {
             var ctxRadar = radarChartElement.getContext('2d');
             var radarLabels = []; // Nazwy testów
+            var testIds = []; // Lista ID testów w tej samej kolejności co labels
             var radarDatasets = []; // Dane dla każdego gracza
+
+            // Najpierw zbierz wszystkie nazwy testów i ich ID
+            for (var testId in comparisonData) {
+                if (comparisonData.hasOwnProperty(testId)) {
+                    var testData = comparisonData[testId];
+                    if (!testData.players || Object.keys(testData.players).length === 0) {
+                        continue;
+                    }
+                    radarLabels.push(testData.test_name);
+                    testIds.push(testId);
+                }
+            }
 
             // Mapa graczy dla łatwego dostępu
             var playerMap = {};
@@ -122,60 +135,91 @@
                 };
                 radarDatasets.push({
                     label: player.first_name + ' ' + player.last_name,
-                    data: [],
+                    data: Array(radarLabels.length).fill(0), // Wypełnij zerami dla wszystkich testów
                     fill: true,
                     backgroundColor: colors[index % colors.length].replace('1)', '0.2)'),
                     borderColor: colors[index % colors.length],
                     pointBackgroundColor: colors[index % colors.length],
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: colors[index % colors.length]
+                    pointHoverBorderColor: colors[index % colors.length],
+                    pointRadius: 4, // Zwiększenie rozmiaru punktów dla lepszej widoczności
+                    pointHoverRadius: 6 // Zwiększenie rozmiaru punktów przy najechaniu
                 });
             });
 
             // Przetwarzanie danych dla wykresu radarowego
-            for (var testId in comparisonData) {
-                if (comparisonData.hasOwnProperty(testId)) {
-                    var testData = comparisonData[testId];
-                    var stats = testStats[testId];
+            testIds.forEach(function(testId, testIndex) {
+                var testData = comparisonData[testId];
+                var stats = testStats[testId];
 
-                    if (!testData.players || Object.keys(testData.players).length === 0 || !stats) {
-                        continue; // Pomiń testy bez graczy lub statystyk
-                    }
-
-                    radarLabels.push(testData.test_name);
-
-                    var min = stats.min;
-                    var max = stats.max;
-                    var range = max - min;
-                    if (range === 0) range = 1; // Unikaj dzielenia przez zero
-
-                    // Przypisz znormalizowane wyniki dla każdego gracza
-                    radarDatasets.forEach(function(dataset, playerIndex) {
-                        var playerId = playersData[playerIndex].id;
-                        var score = null;
-                        if (testData.players[playerId]) {
-                            var rawScore = testData.players[playerId].result;
-                            // Normalizacja
-                            if (testData.is_lower_better) {
-                                // Niższy wynik lepszy (0-100, gdzie 100 to min)
-                                score = 100 * (1 - ((rawScore - min) / range));
-                            } else {
-                                // Wyższy wynik lepszy (0-100, gdzie 100 to max)
-                                score = 100 * ((rawScore - min) / range);
-                            }
-                            // Ogranicz do 0-100 na wszelki wypadek
-                             score = Math.max(0, Math.min(100, score));
-                        } else {
-                             score = 0; // Lub inna wartość domyślna, jeśli gracz nie ma wyniku
-                        }
-                        dataset.data.push(score);
-                    });
+                if (!stats) {
+                    return; // Pomiń testy bez statystyk
                 }
-            }
+
+                var min = stats.min;
+                var max = stats.max;
+                var range = max - min;
+                if (range === 0) range = 1; // Unikaj dzielenia przez zero
+
+                // Zbierz wszystkie wyniki dla danego testu, aby określić zakres dla tego porównania
+                var testResults = [];
+                var playerResults = {};
+                
+                radarDatasets.forEach(function(dataset, playerIndex) {
+                    var playerId = playersData[playerIndex].id;
+                    if (testData.players && testData.players[playerId]) {
+                        var rawScore = testData.players[playerId].result;
+                        testResults.push(rawScore);
+                        playerResults[playerId] = rawScore;
+                    }
+                });
+                
+                // Oblicz min i max z aktualnych wyników (tylko dla zawodników w porównaniu)
+                var localMin = Math.min(...testResults);
+                var localMax = Math.max(...testResults);
+                var localRange = localMax - localMin;
+                
+                // Jeśli wszyscy zawodnicy mają taki sam wynik, stwórz sztuczny zakres
+                if (localRange === 0) {
+                    if (testData.is_lower_better) {
+                        // Dla "niższy lepszy", taki sam wynik = 80% skali (dobry wynik)
+                        localMin = localMin * 1.25; // Ustaw sztuczny max 25% wyższy
+                    } else {
+                        // Dla "wyższy lepszy", taki sam wynik = 80% skali (dobry wynik)
+                        localMin = localMin * 0.75; // Ustaw sztuczny min 25% niższy
+                    }
+                    localRange = localMax - localMin;
+                }
+
+                // Przypisz znormalizowane wyniki dla każdego gracza
+                radarDatasets.forEach(function(dataset, playerIndex) {
+                    var playerId = playersData[playerIndex].id;
+                    var score = 50; // Domyślna wartość - środek skali
+                    
+                    if (testData.players && testData.players[playerId]) {
+                        var rawScore = testData.players[playerId].result;
+                        
+                        // Normalizacja z wykorzystaniem lokalnego zakresu
+                        if (testData.is_lower_better) {
+                            // Niższy wynik lepszy (0-100, gdzie 100 to najniższy wynik)
+                            score = localRange === 0 ? 80 : 100 - (((rawScore - localMin) / localRange) * 80);
+                        } else {
+                            // Wyższy wynik lepszy (0-100, gdzie 100 to najwyższy wynik)
+                            score = localRange === 0 ? 80 : 20 + (((rawScore - localMin) / localRange) * 80);
+                        }
+                        
+                        // Ogranicz wynik do zakresu 20-100 aby wszystkie wartości były widoczne na wykresie
+                        score = Math.max(20, Math.min(100, score));
+                    }
+                    
+                    // Ustaw wynik w odpowiednim miejscu tablicy
+                    dataset.data[testIndex] = score;
+                });
+            });
             
-             // Ustawienie maksymalnej wartości dla skali (np. 100 dla normalizacji)
-             var maxScaleValue = 100;
+            // Ustawienie maksymalnej wartości dla skali
+            var maxScaleValue = 100;
 
             // Tworzenie wykresu radarowego
             new Chart(ctxRadar, {
@@ -190,26 +234,32 @@
                     elements: {
                         line: {
                             borderWidth: 3
+                        },
+                        point: {
+                            radius: 4, // Zapewnienie, że punkty są widoczne zawsze
+                            borderWidth: 2
                         }
                     },
                     scales: {
                         r: {
                             angleLines: {
-                                color: 'rgba(255, 255, 255, 0.2)'
+                                color: 'rgba(255, 255, 255, 0.3)' // Slightly brighter grid lines
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.2)'
+                                color: 'rgba(255, 255, 255, 0.3)' // Slightly brighter grid lines
                             },
                             pointLabels: {
-                                color: '#ccc',
+                                color: '#ddd', // Slightly brighter point labels
                                 font: {
-                                    size: 12
+                                    size: 13 // Slightly larger font
                                 }
                             },
                             ticks: {
                                 backdropColor: 'rgba(0, 0, 0, 0.5)', // Tło dla etykiet osi
                                 color: '#fff',
-                                stepSize: 20 // Krok co 20 na skali 0-100
+                                stepSize: 20, // Krok co 20 na skali
+                                min: 0, // Minimum na osi
+                                max: 100 // Maximum na osi
                             },
                             suggestedMin: 0,
                             suggestedMax: maxScaleValue
@@ -224,8 +274,20 @@
                                         label += ': ';
                                     }
                                     if (context.parsed.r !== null) {
-                                        // Pokaż znormalizowany wynik (0-100)
-                                        label += context.parsed.r.toFixed(1);
+                                        let testName = radarLabels[context.dataIndex];
+                                        let testId = testIds[context.dataIndex];
+                                        let playerIndex = playersData.findIndex(p => p.first_name + ' ' + p.last_name === context.dataset.label);
+                                        let playerId = playerIndex >= 0 ? playersData[playerIndex].id : null;
+                                        
+                                        if (playerId && testId && comparisonData[testId] && comparisonData[testId].players && comparisonData[testId].players[playerId]) {
+                                            let rawValue = comparisonData[testId].players[playerId].result;
+                                            let unit = comparisonData[testId].unit;
+                                            
+                                            // Dodaj rzeczywistą wartość do etykiety
+                                            label += context.parsed.r.toFixed(1) + ' (Wartość: ' + rawValue + ' ' + unit + ')';
+                                        } else {
+                                            label += context.parsed.r.toFixed(1);
+                                        }
                                     }
                                     return label;
                                 }
@@ -241,7 +303,7 @@
             });
         }
 
-        // Istniejący kod do tworzenia wykresów słupkowych dla każdego testu
+        // Tworzenie wykresów słupkowych dla każdego testu
         var chartIndex = 1;
         for (var testId in comparisonData) {
             if (comparisonData.hasOwnProperty(testId)) {
@@ -254,6 +316,8 @@
                 var canvasId = 'chart_' + chartIndex;
                 var canvas = document.getElementById(canvasId);
                 if (!canvas) {
+                    console.error('Canvas element not found for chart_' + chartIndex);
+                    chartIndex++;
                     continue;
                 }
                 
@@ -265,6 +329,10 @@
                 var backgroundColors = [];
                 var borderColors = [];
                 
+                // Obliczanie średniej dla danego testu
+                var sum = 0;
+                var count = 0;
+                
                 for (var playerId in testData.players) {
                     if (testData.players.hasOwnProperty(playerId)) {
                         var playerData = testData.players[playerId];
@@ -272,40 +340,107 @@
                         dataPoints.push(playerData.result);
                         backgroundColors.push(playerColors[playerId].replace('1)', '0.6)'));
                         borderColors.push(playerColors[playerId]);
+                        
+                        sum += playerData.result;
+                        count++;
                     }
                 }
                 
-                // Tworzenie wykresu słupkowego
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: testData.test_name,
-                            data: dataPoints,
-                            backgroundColor: backgroundColors,
-                            borderColor: borderColors,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: testData.is_lower_better
-                            }
+                // Obliczanie średniej i "bardzo dobrego" wyniku
+                var avgResult = count > 0 ? sum / count : 0;
+                
+                // Określenie "bardzo dobrego" wyniku (20% lepszy od średniej lub lepszy o 20% zakresu)
+                var veryGoodResult;
+                var stats = testStats[testId];
+                var range = stats ? (stats.max - stats.min) : 0;
+                
+                if (testData.is_lower_better) {
+                    // Niższy wynik jest lepszy
+                    veryGoodResult = avgResult - (range * 0.2); // 20% lepszy niż średnia
+                } else {
+                    // Wyższy wynik jest lepszy
+                    veryGoodResult = avgResult + (range * 0.2); // 20% lepszy niż średnia
+                }
+                
+                // Tworzenie datasetów dla linii referencyjnych
+                var datasets = [{
+                    label: testData.test_name,
+                    data: dataPoints,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1,
+                    type: 'bar'
+                }];
+                
+                // Dodaj dataset dla średniej
+                var avgDataset = {
+                    label: 'Średnia: ' + avgResult.toFixed(2) + ' ' + testData.unit,
+                    data: Array(labels.length).fill(avgResult),
+                    type: 'line',
+                    fill: false,
+                    borderColor: 'rgba(255, 193, 7, 1)', // Brighter Yellow/Gold
+                    borderWidth: 3, // Thicker line
+                    pointRadius: 0,
+                    borderDash: [6, 3] // Different dash pattern
+                };
+                datasets.push(avgDataset);
+                
+                // Dodaj dataset dla bardzo dobrego wyniku
+                var veryGoodDataset = {
+                    label: 'Bardzo dobry: ' + veryGoodResult.toFixed(2) + ' ' + testData.unit,
+                    data: Array(labels.length).fill(veryGoodResult),
+                    type: 'line',
+                    fill: false,
+                    borderColor: 'rgba(3, 169, 244, 1)', // Bright Cyan/Blue
+                    borderWidth: 3, // Thicker line
+                    pointRadius: 0,
+                    borderDash: [6, 3] // Different dash pattern
+                };
+                datasets.push(veryGoodDataset);
+                
+                // Determine suggested Y-axis minimum for bar charts when higher is better
+                let suggestedYMin = undefined;
+                if (!testData.is_lower_better && dataPoints.length > 0) {
+                    let minYValue = Math.min(...dataPoints);
+                    // Add some padding below the minimum value, ensure it doesn't go below 0 if scores are non-negative
+                    suggestedYMin = Math.max(0, minYValue - (Math.abs(minYValue) * 0.1 + 1)); // 10% padding + 1 unit buffer
+                }
+
+                // Tworzenie wykresu słupkowego z liniami referencyjnymi
+                try {
+                    new Chart(ctx, {
+                        type: 'bar', // Główny typ wykresu
+                        data: {
+                            labels: labels,
+                            datasets: datasets
                         },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ' + context.raw + ' ' + testData.unit;
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: testData.is_lower_better,
+                                    suggestedMin: suggestedYMin // Add suggested minimum
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            if (context.dataset.type === 'bar') {
+                                                return context.dataset.label + ': ' + context.raw + ' ' + testData.unit;
+                                            } else {
+                                                return context.dataset.label;
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                    console.log('Successfully created chart for test: ' + testData.test_name);
+                } catch (e) {
+                    console.error('Error creating chart for test: ' + testData.test_name, e);
+                }
                 
                 chartIndex++;
             }
@@ -494,12 +629,12 @@
 
     .radar-chart-container {
         margin-bottom: 30px; /* Odstęp pod wykresem radarowym */
-        height: 500px; /* Ustawienie wysokości kontenera dla radaru */
+        height: 550px; /* Increased height for radar */
         position: relative; /* Potrzebne dla poprawnego pozycjonowania notatki */
     }
 
     .radar-chart-container canvas {
-        max-height: 450px; /* Maksymalna wysokość samego płótna */
+        max-height: 500px; /* Increased max-height for radar canvas */
         width: 100% !important; /* Upewnij się, że szerokość jest na 100% */
     }
 
@@ -528,8 +663,8 @@
 
     /* Poprawki dla kontenera testu */
     .test-card .chart-container canvas {
-        min-height: 200px; /* Zmniejszenie minimalnej wysokości dla wykresów słupkowych */
-        max-height: 250px;
+        min-height: 250px; /* Increased min-height for bar charts */
+        max-height: 300px; /* Increased max-height for bar charts */
     }
 </style>
 {% endblock %} 
